@@ -1,0 +1,73 @@
+#!/usr/bin/env python
+
+import argparse
+import os
+import subprocess
+import sys
+import tarfile
+
+
+"""
+Wharfie - helper command for building docker containers
+=======================================================
+
+Assumes a layout like so:
+
+containers/
+    -> webpay/
+        -> Dockerfile
+    -> solitude/
+        -> Dockerfile
+yum/
+    -> mysql.repo
+    -> mkt.repo
+
+
+Example Usage
+-------------
+
+wharfie build webpay
+
+Will result in tarring the webpay content + the yum dir
+and then building from the container/webpay/Dockerfile
+
+"""
+
+
+
+ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), '../'))
+CONTAINERS_DIR = os.path.realpath(os.path.join(ROOT, 'containers'))
+YUM_DIR = os.path.realpath(os.path.join(ROOT, 'yum'))
+VALID_SUBDIRS = os.walk('containers').next()[1]
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Wharfie')
+    parser.add_argument('build', help='build a Dockerfile')
+    parser.add_argument('name', help='[name] the name of the Docker container to build. Should map to containers/[name]')
+    args = parser.parse_args()
+
+    container_name = args.name
+    container_dir = os.path.join(CONTAINERS_DIR, container_name)
+    dockerfile_path = os.path.join(container_dir, 'Dockerfile')
+
+    if container_name not in VALID_SUBDIRS:
+        parser.error('"{0}" is not a valid container name, check directory exists in "{1}"'.format(container_name, CONTAINERS_DIR))
+    elif not os.path.isfile(dockerfile_path):
+        parser.error('Dockerfile does not exist at "{0}"'.format(dockerfile_path))
+    else:
+        tar_name = container_name + '.tar'
+        tar_path = os.path.join(ROOT, 'tmp', tar_name)
+        with tarfile.open(tar_path, "w") as tar:
+            # Add yum dir to tarball.
+            tar.add(YUM_DIR, arcname=os.path.basename(YUM_DIR))
+            # Add container dir contents to tarball.
+            tar.add(container_dir, arcname='')
+
+        cat = subprocess.Popen(['cat', tar_path], stdout=subprocess.PIPE)
+        subprocess.call(['docker', 'build', '-t', container_name, '-'], stdin=cat.stdout)
+
+
+
+if __name__ == "__main__":
+    sys.exit(main())
