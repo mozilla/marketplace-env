@@ -2,7 +2,7 @@
 
 A project to bring together a turn-key marketplace development environment using Docker containers.
 
-Note: This is currently in active development and should be considered experimental.
+*Note: This is currently in active development and should be considered experimental.*
 
 ## Setup
 
