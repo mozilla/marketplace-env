@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import ConfigParser as configparser
 import os
 import subprocess
 import sys
@@ -8,12 +9,12 @@ import tarfile
 
 
 """
-Wharfie - helper command for building docker containers
+Wharfie - helper command for building docker images
 =======================================================
 
 Assumes a layout like so:
 
-containers/
+images/
     -> webpay/
         -> Dockerfile
     -> solitude/
@@ -29,44 +30,133 @@ Example Usage
 wharfie build webpay
 
 Will result in tarring the webpay content + the yum dir
-and then building from the container/webpay/Dockerfile
+and then building from the image/webpay/Dockerfile
 
 """
 
 
-
 ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), '../'))
-CONTAINERS_DIR = os.path.realpath(os.path.join(ROOT, 'containers'))
+IMAGES_DIR = os.path.realpath(os.path.join(ROOT, 'images'))
 YUM_DIR = os.path.realpath(os.path.join(ROOT, 'yum'))
-VALID_SUBDIRS = os.walk('containers').next()[1]
+CONFIG_PATH = os.path.expanduser('~/.wharfie')
+TREES_DIR = os.path.realpath(os.path.join(ROOT, 'trees'))
+BRANCHES = [
+    'zamboni',
+    'webpay',
+    'spartacus',
+    'solitude',
+    'fireplace',
+]
+
+def checkout(args, parser):
+    github_username = whoami(quiet=True)
+    if not github_username:
+        parser.error('Please set a github username with the "whoami" command first')
+
+    for branch in BRANCHES:
+        tree_dir = os.path.join(TREES_DIR, branch)
+        if not os.path.isdir(tree_dir):
+            subprocess.call(['git', 'clone', 'git@github.com:{0}/{1}.git'.format(github_username, branch), tree_dir])
+            subprocess.call(['git', 'remote', 'add', 'upstream', 'git@github.com:mozilla/{0}.git'.format(branch)], cwd=tree_dir)
+
+def get_image(args, parser):
+    image_name = args.name
+    image_dir = os.path.join(IMAGES_DIR, image_name)
+
+    if not os.path.isdir(image_dir):
+        parser.error('image_dir: {0} does not exist. Exiting'.format(image_dir))
+
+    return {
+        'name': image_name,
+        'dir': image_dir,
+    }
+
+
+def whoami(args=None, parser=None, quiet=False):
+    user = os.environ.get('MKT_GITHUB_USERNAME', None)
+    if not user:
+        config = configparser.ConfigParser()
+        config.read(CONFIG_PATH)
+        user = config.get('github', 'user')
+
+    if args:
+        user = args.github_username
+        if username:
+            try:
+                config.add_section('github')
+            except configparser.DuplicateSectionError:
+                pass
+            config.set('github', 'user', username)
+            if not quiet:
+                print('Saving username {0} to ~/.wharfie'.format(user))
+            with open(CONFIG_PATH, 'w') as configfile:
+                config.write(configfile)
+
+    if not quiet:
+        if user or username:
+            print('github user: {0}'.format(user))
+        else:
+            print('Try setting your github username with "wharfie whoami [github_username]"')
+
+    return user
+
+def shell(args, parser):
+    image = get_image(args, parser)
+    image_name = image['name']
+    return subprocess.call(['docker', 'run', '-a', 'stdin', '-a', 'stdout', '-i', '-t', image_name + '_img', '/bin/bash'])
+
+
+def build(args, parser):
+    image = get_image(args, parser)
+    image_name = image['name']
+    image_dir = image['dir']
+
+    dockerfile_path = os.path.join(image_dir, 'Dockerfile')
+
+    if not os.path.isfile(dockerfile_path):
+        parser.error('Dockerfile does not exist at "{0}"'.format(dockerfile_path))
+
+    tar_name = image_name + '.tar'
+    tar_path = os.path.join(ROOT, 'tmp', tar_name)
+    with tarfile.open(tar_path, "w") as tar:
+        # Add yum dir to tarball.
+        tar.add(YUM_DIR, arcname=os.path.basename(YUM_DIR))
+        # Add image dir contents to tarball.
+        tar.add(image_dir, arcname='')
+
+    cat = subprocess.Popen(['cat', tar_path], stdout=subprocess.PIPE)
+    print('Building image: {0}'.format(image_name + '_img'))
+    return subprocess.call(['docker', 'build', '-t', image_name + '_img', '-'], stdin=cat.stdout)
 
 
 def main():
+
+    image_name_help = 'The name of the image to build. Should map to images/[name]'
     parser = argparse.ArgumentParser(description='Wharfie')
-    parser.add_argument('build', help='build a Dockerfile')
-    parser.add_argument('name', help='[name] the name of the Docker container to build. Should map to containers/[name]')
+    subparsers = parser.add_subparsers(help='See each command for additional help', title='Sub-commands', description='Valid commands')
+
+    if not os.path.isdir(IMAGES_DIR):
+        parser.error('IMAGES_DIR: {0} does not exist. Exiting'.format(IMAGES_DIR))
+
+    VALID_SUBDIRS = os.walk(IMAGES_DIR).next()[1]
+
+    parser_build = subparsers.add_parser('build', help='Build an image')
+    parser_build.add_argument('name', help=image_name_help, metavar="IMAGE_NAME", choices=VALID_SUBDIRS)
+    parser_build.set_defaults(func=build)
+
+    parser_shell = subparsers.add_parser('shell', help='Run image, and drop into a shell on it.')
+    parser_shell.add_argument('name', help=image_name_help, metavar="IMAGE_NAME", choices=VALID_SUBDIRS)
+    parser_shell.set_defaults(func=shell)
+
+    parser_whoami = subparsers.add_parser('whoami', help='Check your github credentials')
+    parser_whoami.add_argument('github_username', help='Your github username e.g. "jrrtolkien"', metavar="USER_NAME", default=None, nargs='?')
+    parser_whoami.set_defaults(func=whoami)
+
+    parser_checkout = subparsers.add_parser('checkout', help='Checkout your forks of sourcecode')
+    parser_checkout.set_defaults(func=checkout)
+
     args = parser.parse_args()
-
-    container_name = args.name
-    container_dir = os.path.join(CONTAINERS_DIR, container_name)
-    dockerfile_path = os.path.join(container_dir, 'Dockerfile')
-
-    if container_name not in VALID_SUBDIRS:
-        parser.error('"{0}" is not a valid container name, check directory exists in "{1}"'.format(container_name, CONTAINERS_DIR))
-    elif not os.path.isfile(dockerfile_path):
-        parser.error('Dockerfile does not exist at "{0}"'.format(dockerfile_path))
-    else:
-        tar_name = container_name + '.tar'
-        tar_path = os.path.join(ROOT, 'tmp', tar_name)
-        with tarfile.open(tar_path, "w") as tar:
-            # Add yum dir to tarball.
-            tar.add(YUM_DIR, arcname=os.path.basename(YUM_DIR))
-            # Add container dir contents to tarball.
-            tar.add(container_dir, arcname='')
-
-        cat = subprocess.Popen(['cat', tar_path], stdout=subprocess.PIPE)
-        subprocess.call(['docker', 'build', '-t', container_name, '-'], stdin=cat.stdout)
-
+    args.func(args, parser)
 
 
 if __name__ == "__main__":
