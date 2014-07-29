@@ -116,9 +116,9 @@ def build(args, parser):
     if not os.path.isfile(dockerfile_path):
         parser.error('Dockerfile does not exist at "{0}"'.format(dockerfile_path))
 
-    tar_name = image_name + '.tar'
+    tar_name = image_name + '.tar.gz'
     tar_path = os.path.join(ROOT, 'tmp', tar_name)
-    with tarfile.open(tar_path, "w") as tar:
+    with tarfile.open(tar_path, "w:gz") as tar:
         # Add yum dir to tarball.
         tar.add(YUM_DIR, arcname=os.path.basename(YUM_DIR))
         # Add image dir contents to tarball.
