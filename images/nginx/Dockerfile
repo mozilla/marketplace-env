@@ -1,6 +1,4 @@
-FROM    centos:centos6
-
-ADD yum/mkt.repo  /etc/yum.repos.d/mkt.repo
+FROM muffinresearch/centos-python27-mkt:latest
 
 RUN yum install -y nginx
 
@@ -8,4 +6,4 @@ ADD nginx.conf /etc/nginx/conf.d/marketplace.conf
 
 EXPOSE 80
 
-CMD ['nginx', '-c', '/etc/nginx.conf', '-g', 'daemon off;']
+CMD ['/usr/sbin/nginx', '-c', '/etc/nginx/nginx.conf', '-g', '"daemon off;"']
