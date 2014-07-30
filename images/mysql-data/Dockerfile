@@ -1,4 +1,4 @@
-FROM muffinresearch/centos-python27-mkt:latest
+FROM mysql-community_img 
 
 VOLUME /var/lib/mysql
 

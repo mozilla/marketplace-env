@@ -126,7 +126,7 @@ def build(args, parser):
 
     cat = subprocess.Popen(['cat', tar_path], stdout=subprocess.PIPE)
     print('Building image: {0}'.format(image_name + '_img'))
-    return subprocess.call(['docker', 'build', '-t', image_name + '_img', '-'], stdin=cat.stdout)
+    return subprocess.call(['docker', 'build', '-no-cache', '-t', image_name + '_img', '-'], stdin=cat.stdout)
 
 
 def main():
