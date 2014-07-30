@@ -55,3 +55,4 @@ docs/_build/
 
 tmp/*
 trees/*
+images/boot2docker/Dockerfile
