@@ -24,7 +24,7 @@ To get set-up we'd suggest creating a virtualenv after installing virtualenvwrap
     $ mv ~/.boot2docker/boot2docker.iso{,.bck}
     $ curl -o ~/.boot2docker/boot2docker.iso https://dl.dropboxusercontent.com/u/8877748/boot2docker.iso
 
-## Updating the custom boot2docker.iso
+### Updating the custom boot2docker.iso
 
     $ bin/build-b2d-dockerfile.sh
     $ bin/wharfie build boot2docker
