@@ -1,4 +1,4 @@
-FROM mysql-community_img 
+FROM jaredkerim/mysql-community
 
 VOLUME /var/lib/mysql
 
