@@ -1,8 +1,16 @@
+mysqldata:
+  build: images/mysql-data
+
+mysqlservice:
+  build: images/mysql-service
+  volumes_from:
+    - mysqldata
+
 nginx:
   build: images/nginx
-  command: nginx -c /etc/nginx/nginx.conf -g 'daemon off;'
   links:
     - webpay
+    - solitude
   ports:
     - '80:80'
 
@@ -11,4 +19,13 @@ webpay:
   working_dir: /src
   volumes:
     - trees/webpay/:/src
-  command: python manage.py runserver 0.0.0.0:2601
+  command: python src/manage.py runserver
+
+solitude:
+  build: trees/solitude
+  working_dir: /src
+  volumes:
+    - trees/solitude/:/src
+  links:
+    - mysqlservice
+  command: python src/manage.py runserver
