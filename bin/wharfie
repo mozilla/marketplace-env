@@ -77,23 +77,26 @@ def whoami(args=None, parser=None, quiet=False):
     if not user:
         config = configparser.ConfigParser()
         config.read(CONFIG_PATH)
-        user = config.get('github', 'user')
+        try:
+            user = config.get('github', 'user')
+        except configparser.NoSectionError:
+            pass
 
-    if args:
+    if args and args.github_username:
         user = args.github_username
-        if username:
+        if user:
             try:
                 config.add_section('github')
             except configparser.DuplicateSectionError:
                 pass
-            config.set('github', 'user', username)
+            config.set('github', 'user', user)
             if not quiet:
                 print('Saving username {0} to ~/.wharfie'.format(user))
             with open(CONFIG_PATH, 'w') as configfile:
                 config.write(configfile)
 
     if not quiet:
-        if user or username:
+        if user:
             print('github user: {0}'.format(user))
         else:
             print('Try setting your github username with "wharfie whoami [github_username]"')
@@ -120,8 +123,6 @@ def build(args, parser):
     tar_name = image_name + '.tar.gz'
     tar_path = os.path.join(ROOT, 'tmp', tar_name)
     with tarfile.open(tar_path, "w:gz") as tar:
-        # Add yum dir to tarball.
-        tar.add(YUM_DIR, arcname=os.path.basename(YUM_DIR))
         # Add image dir contents to tarball.
         tar.add(image_dir, arcname='')
 

@@ -1,1 +1,1 @@
-fig==0.5.1
+-e git://github.com/orchardup/fig.git@847ec5b559cf97296c80624774cc4210bbabcac6#egg=fig

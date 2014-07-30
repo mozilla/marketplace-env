@@ -1,0 +1,14 @@
+nginx:
+  build: images/nginx
+  command: nginx -c /etc/nginx/nginx.conf -g 'daemon off;'
+  links:
+    - webpay
+  ports:
+    - '80:80'
+
+webpay:
+  build: trees/webpay/
+  working_dir: /src
+  volumes:
+    - trees/webpay/:/src
+  command: python manage.py runserver 0.0.0.0:2601
