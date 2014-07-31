@@ -1,5 +1,0 @@
-[mozilla-mkt]
-name=Marketplace deps
-baseurl=https://s3.amazonaws.com/net.mozaws.ops.rpmrepo/6/x86_64/
-gpgcheck=0
-enabled=1
