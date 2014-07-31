@@ -1,3 +1,13 @@
+nginx:
+  build: images/nginx
+  links:
+    - webpay
+    - solitude
+  ports:
+    - '80:80'
+  volumes:
+    - trees/spartacus/public/:/srv/spartacus
+
 mysqldata:
   build: images/mysql-data
 
@@ -6,21 +16,6 @@ mysqlservice:
   volumes_from:
     - mysqldata
 
-nginx:
-  build: images/nginx
-  links:
-    - webpay
-    - solitude
-  ports:
-    - '80:80'
-
-webpay:
-  build: trees/webpay/
-  working_dir: /src
-  volumes:
-    - trees/webpay/:/src
-  command: python src/manage.py runserver
-
 solitude:
   build: trees/solitude
   working_dir: /src
@@ -28,4 +23,18 @@ solitude:
     - trees/solitude/:/src
   links:
     - mysqlservice
-  command: python src/manage.py runserver
+  command: python manage.py runserver
+  working_dir: /src
+
+spartacus:
+  build: trees/spartacus/
+  volumes:
+    - trees/spartacus/:/spartacus/src
+  command: "grunt docker"
+  working_dir: /spartacus/src
+
+webpay:
+  build: trees/webpay/
+  command: python manage.py runserver 0.0.0.0:2601
+  volumes:
+    - trees/webpay/:/src

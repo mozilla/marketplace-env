@@ -1,4 +1,4 @@
-FROM muffinresearch/centos-python27-mkt:latest
+FROM muffinresearch/centos-python27-mkt:0.4
 
 RUN yum install -y nginx
 
