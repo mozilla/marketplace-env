@@ -1,4 +1,4 @@
-FROM jaredkerim/mysql-community
+FROM busybox
 
 VOLUME /var/lib/mysql
 
