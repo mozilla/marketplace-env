@@ -37,7 +37,6 @@ and then building from the image/webpay/Dockerfile
 
 ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), '../'))
 IMAGES_DIR = os.path.realpath(os.path.join(ROOT, 'images'))
-YUM_DIR = os.path.realpath(os.path.join(ROOT, 'yum'))
 CONFIG_PATH = os.path.expanduser('~/.wharfie')
 TREES_DIR = os.path.realpath(os.path.join(ROOT, 'trees'))
 BRANCHES = [
@@ -47,6 +46,7 @@ BRANCHES = [
     'solitude',
     'fireplace',
 ]
+
 
 def checkout(args, parser):
     github_username = whoami(quiet=True)
@@ -58,6 +58,7 @@ def checkout(args, parser):
         if not os.path.isdir(tree_dir):
             subprocess.call(['git', 'clone', 'git@github.com:{0}/{1}.git'.format(github_username, branch), tree_dir])
             subprocess.call(['git', 'remote', 'add', 'upstream', 'git@github.com:mozilla/{0}.git'.format(branch)], cwd=tree_dir)
+
 
 def get_image(args, parser):
     image_name = args.name
@@ -110,27 +111,6 @@ def shell(args, parser):
     return subprocess.call(['docker', 'run', '-a', 'stdin', '-a', 'stdout', '-i', '-t', image_name + '_img', '/bin/bash'])
 
 
-def build(args, parser):
-    image = get_image(args, parser)
-    image_name = image['name']
-    image_dir = image['dir']
-
-    dockerfile_path = os.path.join(image_dir, 'Dockerfile')
-
-    if not os.path.isfile(dockerfile_path):
-        parser.error('Dockerfile does not exist at "{0}"'.format(dockerfile_path))
-
-    tar_name = image_name + '.tar.gz'
-    tar_path = os.path.join(ROOT, 'tmp', tar_name)
-    with tarfile.open(tar_path, "w:gz") as tar:
-        # Add image dir contents to tarball.
-        tar.add(image_dir, arcname='')
-
-    cat = subprocess.Popen(['cat', tar_path], stdout=subprocess.PIPE)
-    print('Building image: {0}'.format(image_name + '_img'))
-    return subprocess.call(['docker', 'build', '-no-cache', '-t', image_name + '_img', '-'], stdin=cat.stdout)
-
-
 def main():
 
     image_name_help = 'The name of the image to build. Should map to images/[name]'
@@ -141,10 +121,6 @@ def main():
         parser.error('IMAGES_DIR: {0} does not exist. Exiting'.format(IMAGES_DIR))
 
     VALID_SUBDIRS = os.walk(IMAGES_DIR).next()[1]
-
-    parser_build = subparsers.add_parser('build', help='Build an image')
-    parser_build.add_argument('name', help=image_name_help, metavar="IMAGE_NAME", choices=VALID_SUBDIRS)
-    parser_build.set_defaults(func=build)
 
     parser_shell = subparsers.add_parser('shell', help='Run image, and drop into a shell on it.')
     parser_shell.add_argument('name', help=image_name_help, metavar="IMAGE_NAME", choices=VALID_SUBDIRS)
