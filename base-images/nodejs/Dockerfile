@@ -1,4 +1,4 @@
-FROM muffinresearch/centos-python27-mkt:0.4
+FROM mozillamarketplace/centos-python27-mkt:0.5
 
 RUN yum install -y npm
 
