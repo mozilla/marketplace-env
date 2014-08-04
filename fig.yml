@@ -1,40 +1,60 @@
+elasticsearch:
+  build: images/elasticsearch
+
 nginx:
   build: images/nginx
+  command: nginx -c /etc/nginx/nginx.conf -g "daemon off;"
   links:
     - webpay
+    - spartacus
     - solitude
+    - zamboni
   ports:
     - '80:80'
   volumes:
     - trees/spartacus/public/:/srv/spartacus
 
+memcached:
+  build: images/memcached
+  command: service memcached start
+
 mysqldata:
   build: images/mysql-data
 
-mysqlservice:
+mysql:
   build: images/mysql-service
   volumes_from:
     - mysqldata
 
 solitude:
   build: trees/solitude
-  working_dir: /src
-  volumes:
-    - trees/solitude/:/src
+  command: /bin/bash /srv/solitude/bin/docker_run.sh
   links:
-    - mysqlservice
-  command: python manage.py runserver
-  working_dir: /src
+    - mysql
+  volumes:
+    - trees/solitude/:/srv/solitude
+  working_dir: /srv/solitude
 
 spartacus:
-  build: trees/spartacus/
-  volumes:
-    - trees/spartacus/:/spartacus/src
+  build: trees/spartacus
   command: "grunt docker"
-  working_dir: /spartacus/src
+  volumes:
+    - trees/spartacus/:/srv/spartacus/src
+  working_dir: /srv/spartacus/src
 
 webpay:
-  build: trees/webpay/
+  build: trees/webpay
   command: python manage.py runserver 0.0.0.0:2601
   volumes:
-    - trees/webpay/:/src
+    - trees/webpay/:/srv/webpay
+  working_dir: /srv/webpay
+
+zamboni:
+  build: trees/zamboni
+  command: /bin/bash /srv/zamboni/bin/docker_run.sh
+  links:
+    - mysql
+    - memcached
+  volumes:
+    - trees/zamboni/:/srv/zamboni
+  working_dir: /srv/zamboni
