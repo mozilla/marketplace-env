@@ -11,4 +11,7 @@ RUN chown -R elasticsearch /usr/local/var/log/
 
 RUN curl -o /etc/elasticsearch/elasticsearch.yml https://raw.githubusercontent.com/mozilla/zamboni/master/scripts/elasticsearch/elasticsearch.yml
 
+VOLUME /var/lib/elasticsearch
+VOLUME /var/log/elasticsearch
+
 EXPOSE 9200
