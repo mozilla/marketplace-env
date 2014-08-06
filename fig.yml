@@ -1,5 +1,15 @@
 elasticsearch:
   build: images/elasticsearch
+  ports:
+    - "9200:9200"
+    - "9300:9300"
+
+fireplace:
+  build: trees/fireplace
+  volumes:
+    - trees/fireplace/:/srv/fireplace/src
+  working_dir: /srv/fireplace/src
+  command: damper
 
 nginx:
   build: images/nginx
@@ -13,6 +23,7 @@ nginx:
     - '80:80'
   volumes:
     - trees/spartacus/public/:/srv/spartacus
+    - trees/fireplace/src/:/srv/fireplace
 
 memcached:
   build: images/memcached
@@ -55,6 +66,7 @@ zamboni:
   links:
     - mysql
     - memcached
+    - elasticsearch
   volumes:
     - trees/zamboni/:/srv/zamboni
   working_dir: /srv/zamboni

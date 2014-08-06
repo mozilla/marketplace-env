@@ -45,6 +45,7 @@ BRANCHES = [
     'spartacus',
     'solitude',
     'fireplace',
+    'zippy',
 ]
 
 
