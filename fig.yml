@@ -27,7 +27,7 @@ nginx:
 
 memcached:
   build: images/memcached
-  command: service memcached start
+  command: memcached -u nobody
 
 mysqldata:
   build: images/mysql-data
