@@ -40,6 +40,8 @@ mysql:
 solitude:
   build: trees/solitude
   command: /bin/bash /srv/solitude/bin/docker_run.sh
+  environment:
+    - PYTHONDONTWRITEBYTECODE=1
   links:
     - mysql
   volumes:
@@ -56,6 +58,8 @@ spartacus:
 webpay:
   build: trees/webpay
   command: python manage.py runserver 0.0.0.0:2601
+  environment:
+    - PYTHONDONTWRITEBYTECODE=1
   volumes:
     - trees/webpay/:/srv/webpay
   working_dir: /srv/webpay
@@ -63,6 +67,8 @@ webpay:
 zamboni:
   build: trees/zamboni
   command: /bin/bash /srv/zamboni/bin/docker_run.sh
+  environment:
+    - PYTHONDONTWRITEBYTECODE=1
   links:
     - mysql
     - memcached
