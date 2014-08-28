@@ -18,6 +18,21 @@ To get set-up we'd suggest creating a virtualenv after installing virtualenvwrap
     $ workon wharfie
     $ pip install -r requirements.txt
 
+### Clone needed repos
+
+Clone following repos into `trees/`:
+
+ * https://github.com/mozilla/fireplace
+ * https://github.com/mozilla/spartacus
+ * https://github.com/mozilla/solitude
+ * https://github.com/mozilla/webpay
+
+### fig
+
+Install [fig](http://www.fig.sh/) and run following command:
+
+    $ fig up
+
 ## Updating boot2docker with virtualbox additions to support volume mounts (OSX hosts)
 
 You'll need boot2docker installed on OSX. This provides a lightweight VM + an osx docker binary.
