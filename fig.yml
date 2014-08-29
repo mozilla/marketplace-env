@@ -73,6 +73,7 @@ zamboni:
     - mysql
     - memcached
     - elasticsearch
+    - solitude
   volumes:
     - trees/zamboni/:/srv/zamboni
   working_dir: /srv/zamboni
