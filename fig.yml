@@ -42,6 +42,7 @@ solitude:
   command: /bin/bash /srv/solitude/bin/docker_run.sh
   environment:
     - PYTHONDONTWRITEBYTECODE=1
+  hostname: solitude_1
   links:
     - mysql
   volumes:
