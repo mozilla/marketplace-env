@@ -9,7 +9,7 @@ fireplace:
   volumes:
     - trees/fireplace/:/srv/fireplace/src
   working_dir: /srv/fireplace/src
-  command: damper
+  command: /bin/bash /srv/fireplace/src/bin/docker_damper.sh
 
 nginx:
   build: images/nginx
