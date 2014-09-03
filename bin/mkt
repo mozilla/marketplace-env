@@ -5,6 +5,7 @@ import ConfigParser as configparser
 import os
 import subprocess
 import sys
+import textwrap
 import tarfile
 
 
@@ -20,6 +21,29 @@ BRANCHES = [
     'zamboni',
     'zippy',
 ]
+
+def indent(text, times=1):
+    wrapper = textwrap.TextWrapper(initial_indent='  '*times, width=90,
+                                   subsequent_indent='  '*times)
+    for line in text.splitlines():
+        print wrapper.fill(line)
+
+def check_git_config(args, parser):
+    for branch in BRANCHES:
+        tree_dir = os.path.join(TREES_DIR, branch)
+        cur_dir = os.getcwd()
+        if os.path.isdir(tree_dir):
+            try:
+                os.chdir(tree_dir)
+                print "[{0}]".format(branch)
+                indent("[remotes]")
+                indent(subprocess.check_output(['git', 'remote', '-v']), 2)
+                indent("[Master branch origin]")
+                origin = subprocess.check_output(['git', 'config', '--get', 'branch.master.remote'])
+                indent(origin, 2)
+                print
+            finally:
+                os.chdir(cur_dir)
 
 
 def checkout(args, parser):
@@ -103,6 +127,9 @@ def main():
     parser_shell = subparsers.add_parser('shell', help='Run image, and drop into a shell on it.')
     parser_shell.add_argument('name', help=image_name_help, metavar="IMAGE_NAME", choices=VALID_SUBDIRS)
     parser_shell.set_defaults(func=shell)
+
+    parser_shell = subparsers.add_parser('chkgitconfig', help='Print out the git config for mkt branches')
+    parser_shell.set_defaults(func=check_git_config)
 
     parser_whoami = subparsers.add_parser('whoami', help='Check your github credentials')
     parser_whoami.add_argument('github_username', help='Your github username e.g. "jrrtolkien"', metavar="USER_NAME", default=None, nargs='?')
