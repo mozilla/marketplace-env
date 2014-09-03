@@ -39,7 +39,7 @@ You'll also need virtualbox installed. Once boot2docker is setup run the followi
 Note: This is something that most users should never need to do.
 
     $ bin/build-b2d-dockerfile.sh
-    $ bin/wharfie build boot2docker
+    $ bin/mkt build boot2docker
 
 Next create the iso by running:
 
