@@ -8,43 +8,16 @@ import sys
 import tarfile
 
 
-"""
-Wharfie - helper command for building docker images
-=======================================================
-
-Assumes a layout like so:
-
-images/
-    -> webpay/
-        -> Dockerfile
-    -> solitude/
-        -> Dockerfile
-yum/
-    -> mysql.repo
-    -> mkt.repo
-
-
-Example Usage
--------------
-
-wharfie build webpay
-
-Will result in tarring the webpay content + the yum dir
-and then building from the image/webpay/Dockerfile
-
-"""
-
-
 ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), '../'))
 IMAGES_DIR = os.path.realpath(os.path.join(ROOT, 'images'))
 CONFIG_PATH = os.path.expanduser('~/.wharfie')
 TREES_DIR = os.path.realpath(os.path.join(ROOT, 'trees'))
 BRANCHES = [
-    'zamboni',
-    'webpay',
-    'spartacus',
-    'solitude',
     'fireplace',
+    'solitude',
+    'spartacus',
+    'webpay',
+    'zamboni',
     'zippy',
 ]
 
@@ -57,8 +30,12 @@ def checkout(args, parser):
     for branch in BRANCHES:
         tree_dir = os.path.join(TREES_DIR, branch)
         if not os.path.isdir(tree_dir):
-            subprocess.call(['git', 'clone', 'git@github.com:{0}/{1}.git'.format(github_username, branch), tree_dir])
-            subprocess.call(['git', 'remote', 'add', 'upstream', 'git@github.com:mozilla/{0}.git'.format(branch)], cwd=tree_dir)
+            subprocess.call(['git', 'clone', '-o', args.moz_remote_name,
+                             'git@github.com:mozilla/{1}.git'.format(branch), tree_dir])
+            subprocess.call(['git', 'remote', 'add', args.fork_remote_name,
+                             'git@github.com:{0}/{0}.git'.format(github_username, branch)], cwd=tree_dir)
+            subprocess.call(['git', 'config', 'branch.master.remote', args.fork_remote_name])
+
 
 
 def get_image(args, parser):
@@ -132,6 +109,12 @@ def main():
     parser_whoami.set_defaults(func=whoami)
 
     parser_checkout = subparsers.add_parser('checkout', help='Checkout your forks of sourcecode')
+    parser_checkout.add_argument('moz_remote_name', help='What to call the mozilla repo remote for this project. Following '
+        'github terminology this defaults to "upstream"',
+        metavar="MOZ_REMOTE_NAME", default='upstream', nargs='?')
+    parser_checkout.add_argument('fork_remote_name', help='What to call your fork remote for this project. Following github '
+        'terminology this defaults to "origin")',
+        metavar="FORK_REMOTE_NAME", default='origin', nargs='?')
     parser_checkout.set_defaults(func=checkout)
 
     args = parser.parse_args()
