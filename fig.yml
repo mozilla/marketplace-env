@@ -15,10 +15,10 @@ nginx:
   build: images/nginx
   command: nginx -c /etc/nginx/nginx.conf -g "daemon off;"
   links:
-    - webpay
-    - spartacus
-    - solitude
-    - zamboni
+    - webpay:webpay
+    - spartacus:spartacus
+    - solitude:solitude
+    - zamboni:zamboni
   ports:
     - '80:80'
   volumes:
@@ -42,9 +42,9 @@ solitude:
   command: /bin/bash /srv/solitude/bin/docker_run.sh
   environment:
     - PYTHONDONTWRITEBYTECODE=1
-  hostname: solitude_1
+  hostname: solitude
   links:
-    - mysql
+    - mysql:mysql
   volumes:
     - trees/solitude/:/srv/solitude
   working_dir: /srv/solitude
@@ -71,10 +71,10 @@ zamboni:
   environment:
     - PYTHONDONTWRITEBYTECODE=1
   links:
-    - mysql
-    - memcached
-    - elasticsearch
-    - solitude
+    - mysql:mysql
+    - memcached:memcached
+    - elasticsearch:elasticsearch
+    - solitude:solitude
   volumes:
     - trees/zamboni/:/srv/zamboni
   working_dir: /srv/zamboni
