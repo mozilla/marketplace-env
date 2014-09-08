@@ -16,3 +16,4 @@ env PATH /opt/rh/python27/root/usr/bin:$PATH
 env LD_LIBRARY_PATH /opt/rh/python27/root/usr/lib64
 
 RUN easy_install pip
+RUN pip install ipython ipdb
