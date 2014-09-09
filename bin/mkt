@@ -61,7 +61,7 @@ def checkout(args, parser):
         if not os.path.isdir(tree_dir):
             subprocess.call([
                 'git', 'clone', '-o', args.moz_remote_name,
-                'git@github.com:mozilla/{1}.git'.format(branch),
+                'git@github.com:mozilla/{0}.git'.format(branch),
                 tree_dir
             ])
 
