@@ -19,6 +19,7 @@ nginx:
     - spartacus:spartacus
     - solitude:solitude
     - zamboni:zamboni
+    - zippy:zippy
   ports:
     - '80:80'
   volumes:
@@ -37,14 +38,19 @@ mysql:
   volumes_from:
     - mysqldata
 
+redis:
+  build: images/redis
+
 solitude:
   build: trees/solitude
   command: /bin/bash /srv/solitude/bin/docker_run.sh
   environment:
     - PYTHONDONTWRITEBYTECODE=1
+    - ZIPPY_BASE_URL=http://zippy:2605/zippy
   hostname: solitude
   links:
     - mysql:mysql
+    - zippy:zippy
   volumes:
     - trees/solitude/:/srv/solitude
   working_dir: /srv/solitude
@@ -58,9 +64,14 @@ spartacus:
 
 webpay:
   build: trees/webpay
-  command: python manage.py runserver 0.0.0.0:2601
+  command: /bin/bash /srv/webpay/bin/docker_run.sh
   environment:
     - PYTHONDONTWRITEBYTECODE=1
+    - ZIPPY_BASE_URL=http://mp.dev/zippy
+    - MKT_HOSTNAME=mp.dev
+  links:
+    - zippy:zippy
+    - solitude:solitude
   volumes:
     - trees/webpay/:/srv/webpay
   working_dir: /srv/webpay
@@ -78,3 +89,12 @@ zamboni:
   volumes:
     - trees/zamboni/:/srv/zamboni
   working_dir: /srv/zamboni
+
+zippy:
+  build: trees/zippy
+  command: "grunt start --port 2605 --noauth"
+  links:
+    - redis:redis
+  volumes:
+    - trees/zippy/:/srv/zippy/src
+  working_dir: /srv/zippy/src
