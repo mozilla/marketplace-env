@@ -25,6 +25,7 @@ nginx:
   volumes:
     - trees/spartacus/public/:/srv/spartacus
     - trees/fireplace/src/:/srv/fireplace
+    - trees/zamboni/:/srv/zamboni
 
 memcached:
   build: images/memcached
