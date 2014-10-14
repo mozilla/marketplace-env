@@ -1,0 +1,184 @@
+import argparse
+import ConfigParser as configparser
+import os
+import subprocess
+import textwrap
+
+
+ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), '../'))
+IMAGES_DIR = os.path.realpath(os.path.join(ROOT, 'images'))
+CONFIG_PATH = os.path.expanduser('~/.wharfie')
+TREES_DIR = os.path.realpath(os.path.join(ROOT, 'trees'))
+BRANCHES = [
+    'fireplace',
+    'solitude',
+    'spartacus',
+    'webpay',
+    'zamboni',
+    'zippy',
+]
+
+
+def indent(text, times=1):
+    wrapper = textwrap.TextWrapper(
+        initial_indent='  '*times, width=90, subsequent_indent='  '*times
+    )
+    for line in text.splitlines():
+        print wrapper.fill(line)
+
+
+def check_git_config(args, parser):
+    for branch in BRANCHES:
+        tree_dir = os.path.join(TREES_DIR, branch)
+        cur_dir = os.getcwd()
+        if os.path.isdir(tree_dir):
+            try:
+                os.chdir(tree_dir)
+                print "[{0}]".format(branch)
+                indent("[remotes]")
+                indent(subprocess.check_output(['git', 'remote', '-v']), 2)
+                indent("[Master branch origin]")
+                origin = subprocess.check_output(['git', 'config', '--get',
+                                                  'branch.master.remote'])
+                indent(origin, 2)
+                print
+            finally:
+                os.chdir(cur_dir)
+
+
+def checkout(args, parser, gh_username=None):
+    if not gh_username:
+        gh_username = whoami(quiet=True)
+    if not gh_username:
+        parser.error('Please set a github username with the "whoami" '
+                     'command first')
+
+    for branch in BRANCHES:
+        tree_dir = os.path.join(TREES_DIR, branch)
+
+        if not os.path.isdir(tree_dir):
+            subprocess.call([
+                'git', 'clone', '-o', args.moz_remote_name,
+                'git@github.com:mozilla/{0}.git'.format(branch),
+                tree_dir
+            ])
+
+            subprocess.call([
+                'git', 'remote', 'add', args.fork_remote_name,
+                'git@github.com:{0}/{1}.git'.format(gh_username, branch)
+            ], cwd=tree_dir)
+
+            subprocess.call([
+                'git', 'config', 'branch.master.remote', args.fork_remote_name
+            ])
+
+
+def get_image(args, parser):
+    image_name = args.name
+    image_dir = os.path.join(IMAGES_DIR, image_name)
+
+    if not os.path.isdir(image_dir):
+        parser.error('image_dir: {0} does not exist. '
+                     'Exiting'.format(image_dir))
+
+    return {
+        'name': image_name,
+        'dir': image_dir,
+    }
+
+
+def whoami(args=None, parser=None, quiet=False):
+    user = os.environ.get('MKT_GITHUB_USERNAME', None)
+    if not user:
+        config = configparser.ConfigParser()
+        config.read(CONFIG_PATH)
+        try:
+            user = config.get('github', 'user')
+        except configparser.NoSectionError:
+            pass
+
+    if args and args.github_username:
+        user = args.github_username
+        if user:
+            try:
+                config.add_section('github')
+            except configparser.DuplicateSectionError:
+                pass
+            config.set('github', 'user', user)
+            if not quiet:
+                print('Saving username {0} to ~/.wharfie'.format(user))
+            with open(CONFIG_PATH, 'w') as configfile:
+                config.write(configfile)
+
+    if not quiet:
+        if user:
+            print('github user: {0}'.format(user))
+        else:
+            print('Try setting your github username with '
+                  '"mkt whoami [github_username]"')
+
+    return user
+
+
+def shell(args, parser):
+    image = get_image(args, parser)
+    image_name = image['name']
+    return subprocess.call(['docker', 'run', '-a', 'stdin', '-a', 'stdout',
+                            '-i', '-t', image_name + '_img', '/bin/bash'])
+
+
+def create_parser():
+    parser = argparse.ArgumentParser(description='Wharfie')
+
+    subparsers = parser.add_subparsers(
+        help='See each command for additional help',
+        title='Sub-commands', description='Valid commands'
+    )
+
+    if not os.path.isdir(IMAGES_DIR):
+        parser.error('IMAGES_DIR: {0} does not exist. '
+                     'Exiting'.format(IMAGES_DIR))
+
+    VALID_SUBDIRS = os.walk(IMAGES_DIR).next()[1]
+
+    parser_shell = subparsers.add_parser(
+        'shell', help='Run image, and drop into a shell on it.'
+    )
+    parser_shell.add_argument(
+        'name', help='The name of the image to run a shell on',
+        metavar="IMAGE_NAME",
+        choices=VALID_SUBDIRS
+    )
+    parser_shell.set_defaults(func=shell)
+    parser_shell = subparsers.add_parser(
+        'chkgitconfig', help='Print out the git config for mkt branches'
+    )
+    parser_shell.set_defaults(func=check_git_config)
+
+    parser_whoami = subparsers.add_parser(
+        'whoami', help='Check your github credentials'
+    )
+    parser_whoami.add_argument(
+        'github_username', help='Your github username e.g. "jrrtolkien"',
+        metavar="USER_NAME", default=None, nargs='?'
+    )
+    parser_whoami.set_defaults(func=whoami)
+
+    parser_checkout = subparsers.add_parser(
+        'checkout', help='Checkout your forks of sourcecode'
+    )
+    parser_checkout.add_argument(
+        '--moz_remote_name',
+        help='What to call the mozilla repo remote for this project. '
+             'Following github terminology this defaults to "upstream"',
+        metavar="MOZ_REMOTE_NAME",
+        default='upstream', nargs='?'
+    )
+    parser_checkout.add_argument(
+        '--fork_remote_name',
+        help='What to call your fork remote for this project. Following '
+             'github terminology this defaults to "origin"',
+        metavar="FORK_REMOTE_NAME", default='origin', nargs='?'
+    )
+    parser_checkout.set_defaults(func=checkout)
+    return parser
