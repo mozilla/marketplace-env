@@ -67,7 +67,7 @@ def checkout(args, parser):
 
             subprocess.call([
                 'git', 'remote', 'add', args.fork_remote_name,
-                'git@github.com:{0}/{0}.git'.format(gh_username, branch)
+                'git@github.com:{0}/{1}.git'.format(gh_username, branch)
             ], cwd=tree_dir)
 
             subprocess.call([
