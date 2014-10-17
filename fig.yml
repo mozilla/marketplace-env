@@ -46,6 +46,7 @@ solitude:
   build: trees/solitude
   command: /bin/bash /srv/solitude/bin/docker_run.sh
   environment:
+    - PYTHONUNBUFFERED=1
     - PYTHONDONTWRITEBYTECODE=1
     - ZIPPY_BASE_URL=http://zippy:2605/zippy
   hostname: solitude
@@ -67,6 +68,7 @@ webpay:
   build: trees/webpay
   command: /bin/bash /srv/webpay/bin/docker_run.sh
   environment:
+    - PYTHONUNBUFFERED=1
     - PYTHONDONTWRITEBYTECODE=1
     - ZIPPY_BASE_URL=http://mp.dev/zippy
     - MKT_HOSTNAME=mp.dev
@@ -81,6 +83,7 @@ zamboni:
   build: trees/zamboni
   command: /bin/bash /srv/zamboni/bin/docker_run.sh
   environment:
+    - PYTHONUNBUFFERED=1
     - PYTHONDONTWRITEBYTECODE=1
   links:
     - mysql:mysql
