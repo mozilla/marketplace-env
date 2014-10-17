@@ -1,0 +1,14 @@
+language: python
+python:
+  - "2.7"
+virtualenv:
+  system_site_packages: true
+install:
+  - pip install --no-deps -r requirements.txt --use-mirrors
+script: nosetests
+notifications:
+  irc:
+    channels:
+      - "irc.mozilla.org#marketplace"
+    on_success: change
+    on_failure: always
