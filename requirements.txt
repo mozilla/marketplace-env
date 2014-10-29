@@ -1,5 +1,5 @@
+fig==1.0.0
 nose==1.2.1
 nosenicedots==0.5
 mock==1.0.1
 
--e git://github.com/orchardup/fig.git@847ec5b559cf97296c80624774cc4210bbabcac6#egg=fig
