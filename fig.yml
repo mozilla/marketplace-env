@@ -6,10 +6,13 @@ elasticsearch:
 
 fireplace:
   build: trees/fireplace
+  command: /bin/bash /srv/fireplace/src/bin/docker_run.sh
+  environment:
+    - BOWER_PATH=/srv/fireplace/bower_components/
+    - GULP_CONFIG_PATH=/srv/fireplace/src/config
   volumes:
     - trees/fireplace/:/srv/fireplace/src
   working_dir: /srv/fireplace/src
-  command: /bin/bash /srv/fireplace/src/bin/docker_damper.sh
 
 nginx:
   build: images/nginx
