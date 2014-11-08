@@ -1,14 +1,19 @@
 import argparse
 import ConfigParser as configparser
+import functools
 import os
 import subprocess
+import sys
 import textwrap
 
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+join = functools.partial(os.path.join, ROOT)
 
-ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), '../'))
-IMAGES_DIR = os.path.realpath(os.path.join(ROOT, 'images'))
+if 'mkt-data' in os.listdir(ROOT):
+    join = functools.partial(os.path.join, ROOT, 'mkt-data')
+
 CONFIG_PATH = os.path.expanduser('~/.wharfie')
-TREES_DIR = os.path.realpath(os.path.join(ROOT, 'trees'))
+FIG_PATH = os.getenv('FIG_FILE', os.path.expanduser('~/.mkt.fig.yml'))
 BRANCHES = [
     'fireplace',
     'solitude',
@@ -27,13 +32,20 @@ def indent(text, times=1):
         print wrapper.fill(line)
 
 
+def get_dir(name, *args):
+    root_dir = get_config_value('paths', 'root', None)
+    if not root_dir:
+        raise ValueError('"root" not set, run: mkt root [directory].')
+    return os.path.join(root_dir, *args)
+
+
 def check_git_config(args, parser):
     for branch in BRANCHES:
-        tree_dir = os.path.join(TREES_DIR, branch)
+        branch_dir = get_dir(branch)
         cur_dir = os.getcwd()
-        if os.path.isdir(tree_dir):
+        if os.path.isdir(branch_dir):
             try:
-                os.chdir(tree_dir)
+                os.chdir(branch_dir)
                 print "[{0}]".format(branch)
                 indent("[remotes]")
                 indent(subprocess.check_output(['git', 'remote', '-v']), 2)
@@ -54,19 +66,18 @@ def checkout(args, parser, gh_username=None):
                      'command first')
 
     for branch in BRANCHES:
-        tree_dir = os.path.join(TREES_DIR, branch)
-
-        if not os.path.isdir(tree_dir):
+        branch_dir = get_dir(branch)
+        if not os.path.isdir(branch_dir):
             subprocess.call([
                 'git', 'clone', '-o', args.moz_remote_name,
                 'git@github.com:mozilla/{0}.git'.format(branch),
-                tree_dir
+                branch_dir
             ])
 
             subprocess.call([
                 'git', 'remote', 'add', args.fork_remote_name,
                 'git@github.com:{0}/{1}.git'.format(gh_username, branch)
-            ], cwd=tree_dir)
+            ], cwd=branch_dir)
 
             subprocess.call([
                 'git', 'config', 'branch.master.remote', args.fork_remote_name
@@ -75,7 +86,7 @@ def checkout(args, parser, gh_username=None):
 
 def get_image(args, parser):
     image_name = args.name
-    image_dir = os.path.join(IMAGES_DIR, image_name)
+    image_dir = get_dir('images', image_name)
 
     if not os.path.isdir(image_dir):
         parser.error('image_dir: {0} does not exist. '
@@ -90,25 +101,12 @@ def get_image(args, parser):
 def whoami(args=None, parser=None, quiet=False):
     user = os.environ.get('MKT_GITHUB_USERNAME', None)
     if not user:
-        config = configparser.ConfigParser()
-        config.read(CONFIG_PATH)
-        try:
-            user = config.get('github', 'user')
-        except configparser.NoSectionError:
-            pass
+        user = get_config_value('github', 'user') or user
 
     if args and args.github_username:
         user = args.github_username
         if user:
-            try:
-                config.add_section('github')
-            except configparser.DuplicateSectionError:
-                pass
-            config.set('github', 'user', user)
-            if not quiet:
-                print('Saving username {0} to ~/.wharfie'.format(user))
-            with open(CONFIG_PATH, 'w') as configfile:
-                config.write(configfile)
+            set_config_value('github', 'user', user)
 
     if not quiet:
         if user:
@@ -127,6 +125,80 @@ def shell(args, parser):
                             '-i', '-t', image_name + '_img', '/bin/bash'])
 
 
+def get_config_value(section, key, default=None):
+    config = configparser.ConfigParser()
+    config.read(CONFIG_PATH)
+    try:
+        return config.get(section, key)
+    except configparser.NoSectionError:
+        pass
+    return default
+
+
+def set_config_value(section, key, value):
+    config = configparser.ConfigParser()
+    config.read(CONFIG_PATH)
+    try:
+        config.add_section(section)
+    except configparser.DuplicateSectionError:
+        pass
+
+    config.set(section, key, value)
+    print('Saving {0} to {1}'.format(key, CONFIG_PATH))
+    with open(CONFIG_PATH, 'w') as configfile:
+        config.write(configfile)
+
+
+def root(args, parser):
+    directory = os.path.abspath(os.path.expandvars(args.directory))
+    if not os.path.exists(directory):
+        raise ValueError('Directory {0} does not exist.'.format(directory))
+    set_config_value('paths', 'root', directory)
+    update(args, parser)
+
+
+def locations():
+    """
+    Reports the locations of the main components of wharfie.
+    """
+    return {
+        # Where the checked out projects to work on actually live.
+        'tree': get_config_value('paths', 'root'),
+        # Where the images live, will be local or in the installed file path.
+        'image': join('images'),
+        # Where the fig config lives, will be local or in the installed
+        # file path.
+        'fig.dist': join('fig.yml.dist'),
+        # Where fig that the FIG_FILE uses lives.
+        'fig': FIG_PATH
+    }
+
+
+def update(args, parser):
+    context = locations()
+    src_file = context['fig.dist']
+    with open(src_file, 'r') as src:
+        src_data = src.read()
+
+    dest_file = context['fig']
+    with open(dest_file, 'w') as dest:
+        print 'Written fig file to {0}'.format(FIG_PATH)
+        dest.write(src_data.format(**context))
+
+
+def check_env():
+    context = locations()
+    default = os.getenv('FIG_FILE')
+    if context['fig'] != default:
+        print 'Set the following environment variable: '
+        print 'FIG_FILE={0}'.format(FIG_PATH)
+        print
+
+    for path in ['tree', 'image']:
+        if not os.path.exists(context[path]):
+            print 'Path {0} does not exist.'
+
+
 def create_parser():
     parser = argparse.ArgumentParser(description='Wharfie')
 
@@ -135,11 +207,18 @@ def create_parser():
         title='Sub-commands', description='Valid commands'
     )
 
-    if not os.path.isdir(IMAGES_DIR):
-        parser.error('IMAGES_DIR: {0} does not exist. '
-                     'Exiting'.format(IMAGES_DIR))
+    parser_root = subparsers.add_parser(
+        'root', help='Set the root directory of wharfie trees.'
+    )
+    parser_root.add_argument(
+        'directory', help='Path to an existing directory.'
+    )
+    parser_root.set_defaults(func=root)
 
-    VALID_SUBDIRS = os.walk(IMAGES_DIR).next()[1]
+    parser_update = subparsers.add_parser(
+        'update', help='Updates the fig file from the template'
+    )
+    parser_update.set_defaults(func=update)
 
     parser_shell = subparsers.add_parser(
         'shell', help='Run image, and drop into a shell on it.'
@@ -147,7 +226,6 @@ def create_parser():
     parser_shell.add_argument(
         'name', help='The name of the image to run a shell on',
         metavar="IMAGE_NAME",
-        choices=VALID_SUBDIRS
     )
     parser_shell.set_defaults(func=shell)
     parser_shell = subparsers.add_parser(
@@ -182,3 +260,18 @@ def create_parser():
     )
     parser_checkout.set_defaults(func=checkout)
     return parser
+
+
+def main():
+    parser = create_parser()
+    args = parser.parse_args()
+
+    try:
+        check_env()
+        args.func(args, parser)
+    except Exception as e:
+        print('Error: {0}'.format(e.message))
+        raise
+
+if __name__ == "__main__":
+    sys.exit(main())
