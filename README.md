@@ -3,7 +3,6 @@
 Automates the setup of a Marketplace development environment, prominently for
 the backend, using Docker containers.
 
-* [Docker Instructions](https://marketplace.readthedocs.org/latest/topics/docker.html)
-* [Marketplace documentation](https://marketplace.readthedocs.org)
+* [Documentation](https://marketplace.readthedocs.org)
 
 *Note: This is currently in active development and should be considered experimental.*
