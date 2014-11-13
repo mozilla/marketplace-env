@@ -1,3 +1,4 @@
+import os
 from unittest import TestCase
 
 import mock
@@ -64,4 +65,30 @@ class TestCommands(TestCase):
                     'git', 'config',
                     'branch.master.remote', 'upstream'
                 ])
+            ])
+
+    def test_bind_ip(self):
+        args = self.parser.parse_args(['bind', '--bind_ip', '10.0.0.2'])
+
+        p = mock.patch('cmds.get_adb_devices')
+        p.start().return_value = ['abcde      device']
+        self.addCleanup(p.stop)
+
+        def mock_shell(args, **kw):
+            if args[0:2] == ['adb', 'pull']:
+                if os.path.exists('./hosts'):
+                    raise RuntimeError(
+                        'Expected to be running in a temp dir!')
+                with open('./hosts', 'w') as f:
+                    f.write('mock hosts file')
+
+        with mock.patch('cmds.subprocess') as subprocess:
+            subprocess.check_call.side_effect = mock_shell
+
+            cmds.bind(args, self.parser)
+
+            self.assertEqual(subprocess.check_call.call_args_list, [
+                mock.call(['adb', 'remount']),
+                mock.call(['adb', 'pull', '/system/etc/hosts', './']),
+                mock.call(['adb', 'push', './new-hosts', '/system/etc/hosts'])
             ])
