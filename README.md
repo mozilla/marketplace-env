@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/mozilla/wharfie.svg?branch=master)](https://travis-ci.org/mozilla/wharfie)
+[![Build Status](https://travis-ci.org/mozilla/marketplace-env.svg?branch=master)](https://travis-ci.org/mozilla/wharfie)
 
 Automates the setup of a Marketplace development environment, prominently for
 the backend, using Docker containers.
