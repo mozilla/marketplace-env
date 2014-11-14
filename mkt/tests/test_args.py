@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from cmds import create_parser
+from mkt.cmds import create_parser
 
 
 class TestArgs(TestCase):
@@ -32,11 +32,6 @@ class TestArgs(TestCase):
         """User passes shell command no image"""
         with self.assertRaises(SystemExit):
             self.parser.parse_args(['shell'])
-
-    def test_shell_bad_image(self):
-        """User passes shell command bad image"""
-        with self.assertRaises(SystemExit):
-            self.parser.parse_args(['shell', 'whatever'])
 
     def test_checkout(self):
         """User passes checkout command"""

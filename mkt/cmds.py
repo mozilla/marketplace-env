@@ -1,5 +1,6 @@
 import argparse
 import ConfigParser as configparser
+import functools
 import os
 import shutil
 import socket
@@ -12,10 +13,10 @@ from contextlib import contextmanager
 import netifaces
 
 
-ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), '../'))
-IMAGES_DIR = os.path.realpath(os.path.join(ROOT, 'images'))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+join = functools.partial(os.path.join, ROOT)
 CONFIG_PATH = os.path.expanduser('~/.wharfie')
-TREES_DIR = os.path.realpath(os.path.join(ROOT, 'trees'))
+
 BRANCHES = [
     'fireplace',
     'solitude',
@@ -27,6 +28,61 @@ BRANCHES = [
 
 
 # Command functions:
+def get_config_value(section, key, default=None):
+    config = configparser.ConfigParser()
+    config.read(CONFIG_PATH)
+    try:
+        return config.get(section, key)
+    except configparser.NoSectionError:
+        pass
+    return default
+
+
+def set_config_value(section, key, value):
+    config = configparser.ConfigParser()
+    config.read(CONFIG_PATH)
+    try:
+        config.add_section(section)
+    except configparser.DuplicateSectionError:
+        pass
+    config.set(section, key, value)
+    print('Saving {0} to {1}'.format(key, CONFIG_PATH))
+
+    with open(CONFIG_PATH, 'w') as configfile:
+        config.write(configfile)
+
+
+def get_dir(*args):
+    root_dir = get_config_value('paths', 'root', ROOT)
+    result = os.path.join(root_dir, *args)
+    return result
+
+
+def indent(text, times=1):
+    wrapper = textwrap.TextWrapper(
+        initial_indent='  '*times, width=90, subsequent_indent='  '*times
+    )
+    for line in text.splitlines():
+        print wrapper.fill(line)
+
+
+def check_git_config(args, parser):
+    for branch in BRANCHES:
+        branch_dir = get_dir('trees', branch)
+        cur_dir = os.getcwd()
+        if os.path.isdir(branch_dir):
+            try:
+                os.chdir(branch_dir)
+                print "[{0}]".format(branch)
+                indent("[remotes]")
+                indent(subprocess.check_output(['git', 'remote', '-v']), 2)
+                indent("[Master branch origin]")
+                origin = subprocess.check_output(['git', 'config', '--get',
+                                                  'branch.master.remote'])
+                indent(origin, 2)
+                print
+            finally:
+                os.chdir(cur_dir)
 
 
 def checkout(args, parser, gh_username=None):
@@ -37,19 +93,18 @@ def checkout(args, parser, gh_username=None):
                      'command first')
 
     for branch in BRANCHES:
-        tree_dir = os.path.join(TREES_DIR, branch)
-
-        if not os.path.isdir(tree_dir):
+        branch_dir = get_dir('trees', branch)
+        if not os.path.isdir(branch_dir):
             subprocess.call([
                 'git', 'clone', '-o', args.moz_remote_name,
                 'git@github.com:mozilla/{0}.git'.format(branch),
-                tree_dir
+                branch_dir
             ])
 
             subprocess.call([
                 'git', 'remote', 'add', args.fork_remote_name,
                 'git@github.com:{0}/{1}.git'.format(gh_username, branch)
-            ], cwd=tree_dir)
+            ], cwd=branch_dir)
 
             subprocess.call([
                 'git', 'config', 'branch.master.remote', args.fork_remote_name
@@ -59,25 +114,12 @@ def checkout(args, parser, gh_username=None):
 def whoami(args=None, parser=None, quiet=False):
     user = os.environ.get('MKT_GITHUB_USERNAME', None)
     if not user:
-        config = configparser.ConfigParser()
-        config.read(CONFIG_PATH)
-        try:
-            user = config.get('github', 'user')
-        except configparser.NoSectionError:
-            pass
+        user = get_config_value('github', 'user')
 
     if args and args.github_username:
         user = args.github_username
         if user:
-            try:
-                config.add_section('github')
-            except configparser.DuplicateSectionError:
-                pass
-            config.set('github', 'user', user)
-            if not quiet:
-                print('Saving username {0} to ~/.wharfie'.format(user))
-            with open(CONFIG_PATH, 'w') as configfile:
-                config.write(configfile)
+            set_config_value('github', 'user', user)
 
     if not quiet:
         if user:
@@ -180,38 +222,11 @@ def get_adb_devices():
     return devices
 
 
-def indent(text, times=1):
-    wrapper = textwrap.TextWrapper(
-        initial_indent='  '*times, width=90, subsequent_indent='  '*times
-    )
-    for line in text.splitlines():
-        print wrapper.fill(line)
-
-
-def check_git_config(args, parser):
-    for branch in BRANCHES:
-        tree_dir = os.path.join(TREES_DIR, branch)
-        cur_dir = os.getcwd()
-        if os.path.isdir(tree_dir):
-            try:
-                os.chdir(tree_dir)
-                print "[{0}]".format(branch)
-                indent("[remotes]")
-                indent(subprocess.check_output(['git', 'remote', '-v']), 2)
-                indent("[Master branch origin]")
-                origin = subprocess.check_output(['git', 'config', '--get',
-                                                  'branch.master.remote'])
-                indent(origin, 2)
-                print
-            finally:
-                os.chdir(cur_dir)
-
-
 def get_image(args, parser):
     image_name = args.name
-    image_dir = os.path.join(IMAGES_DIR, image_name)
+    image_dir = get_dir('mkt-data', 'images', image_name)
 
-    if not os.path.isdir(image_dir):
+    if not os.path.isdir(image_dir) or not os.path.exists(image_dir):
         parser.error('image_dir: {0} does not exist. '
                      'Exiting'.format(image_dir))
 
@@ -298,19 +313,12 @@ def create_parser():
         title='Sub-commands', description='Valid commands'
     )
 
-    if not os.path.isdir(IMAGES_DIR):
-        parser.error('IMAGES_DIR: {0} does not exist. '
-                     'Exiting'.format(IMAGES_DIR))
-
-    VALID_SUBDIRS = os.walk(IMAGES_DIR).next()[1]
-
     parser_shell = subparsers.add_parser(
         'shell', help='Run image, and drop into a shell on it.'
     )
     parser_shell.add_argument(
         'name', help='The name of the image to run a shell on',
         metavar="IMAGE_NAME",
-        choices=VALID_SUBDIRS
     )
     parser_shell.set_defaults(func=shell)
     parser_shell = subparsers.add_parser(

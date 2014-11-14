@@ -1,5 +1,5 @@
 elasticsearch:
-  build: images/elasticsearch
+  build: mtk-data/images/elasticsearch
   environment:
     - TERM=xterm-256color
   ports:
@@ -18,7 +18,7 @@ fireplace:
   working_dir: /srv/fireplace/src
 
 nginx:
-  build: images/nginx
+  build: mkt-data/images/nginx
   command: nginx -c /etc/nginx/nginx.conf -g "daemon off;"
   environment:
     - TERM=xterm-256color
@@ -36,23 +36,23 @@ nginx:
     - trees/zamboni/:/srv/zamboni
 
 memcached:
-  build: images/memcached
+  build: mkt-data/images/memcached
   command: memcached -u nobody
   environment:
     - TERM=xterm-256color
 
 mysqldata:
-  build: images/mysql-data
+  build: mkt-data/images/mysql-data
 
 mysql:
-  build: images/mysql-service
+  build: mkt-data/images/mysql-service
   environment:
     - TERM=xterm-256color
   volumes_from:
     - mysqldata
 
 redis:
-  build: images/redis
+  build: mkt-data/images/redis
   environment:
     - TERM=xterm-256color
 
