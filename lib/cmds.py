@@ -355,7 +355,7 @@ def create_parser():
         help='Public IP to bind to. If empty, the IP will be discovered.')
     parser_bind.add_argument(
         '--bind_host', default='mp.dev',
-        help='Hostname to bind your IP too. Default: %default')
+        help='Hostname to bind your IP too. Default: %(default)s')
     parser_bind.add_argument(
         '--bind_int',
         help='Network interface to guess a public IP from. Example: en0',
