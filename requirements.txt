@@ -1,5 +1,5 @@
 fig==1.0.0
+netifaces>=0.10.4
 nose==1.2.1
 nosenicedots==0.5
 mock==1.0.1
-
