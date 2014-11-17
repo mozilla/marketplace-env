@@ -148,7 +148,8 @@ def bind(args, parser):
                         # Remove the old IP binding and comments.
                         continue
                     newlines.append(ln)
-                newlines.append('# Docker: wharfie `mkt bind` added this:\n')
+                newlines.append(
+                    '# Docker: marketplace-env `mkt bind` added this:\n')
                 newlines.append('{ip}\t\t    {host}\n'
                                 .format(ip=args.bind_ip, host=args.bind_host))
 
