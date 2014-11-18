@@ -1,5 +1,7 @@
 elasticsearch:
   build: images/elasticsearch
+  environment:
+    - TERM=xterm-256color
   ports:
     - "9200:9200"
     - "9300:9300"
@@ -8,6 +10,7 @@ fireplace:
   build: trees/fireplace
   command: /bin/bash /srv/fireplace/src/bin/docker_run.sh
   environment:
+    - TERM=xterm-256color
     - BOWER_PATH=/srv/fireplace/bower_components/
     - GULP_CONFIG_PATH=/srv/fireplace/src/config
   volumes:
@@ -17,6 +20,8 @@ fireplace:
 nginx:
   build: images/nginx
   command: nginx -c /etc/nginx/nginx.conf -g "daemon off;"
+  environment:
+    - TERM=xterm-256color
   links:
     - webpay:webpay
     - spartacus:spartacus
@@ -33,17 +38,23 @@ nginx:
 memcached:
   build: images/memcached
   command: memcached -u nobody
+  environment:
+    - TERM=xterm-256color
 
 mysqldata:
   build: images/mysql-data
 
 mysql:
   build: images/mysql-service
+  environment:
+    - TERM=xterm-256color
   volumes_from:
     - mysqldata
 
 redis:
   build: images/redis
+  environment:
+    - TERM=xterm-256color
 
 solitude:
   build: trees/solitude
@@ -51,6 +62,7 @@ solitude:
   environment:
     - PYTHONUNBUFFERED=1
     - PYTHONDONTWRITEBYTECODE=1
+    - TERM=xterm-256color
     - ZIPPY_BASE_URL=http://zippy:2605/zippy
   hostname: solitude
   links:
@@ -63,6 +75,8 @@ solitude:
 spartacus:
   build: trees/spartacus
   command: "grunt docker"
+  environment:
+    - TERM=xterm-256color
   volumes:
     - trees/spartacus/:/srv/spartacus/src
   working_dir: /srv/spartacus/src
@@ -71,10 +85,11 @@ webpay:
   build: trees/webpay
   command: /bin/bash /srv/webpay/bin/docker_run.sh
   environment:
+    - MKT_HOSTNAME=mp.dev
     - PYTHONUNBUFFERED=1
     - PYTHONDONTWRITEBYTECODE=1
+    - TERM=xterm-256color
     - ZIPPY_BASE_URL=http://mp.dev/zippy
-    - MKT_HOSTNAME=mp.dev
   links:
     - zippy:zippy
     - solitude:solitude
@@ -88,6 +103,7 @@ zamboni:
   environment:
     - PYTHONUNBUFFERED=1
     - PYTHONDONTWRITEBYTECODE=1
+    - TERM=xterm-256color
   links:
     - mysql:mysql
     - memcached:memcached
@@ -100,6 +116,8 @@ zamboni:
 zippy:
   build: trees/zippy
   command: "grunt start --port 2605 --noauth"
+  environment:
+    - TERM=xterm-256color
   links:
     - redis:redis
   volumes:
