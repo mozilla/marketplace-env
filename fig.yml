@@ -1,5 +1,5 @@
 elasticsearch:
-  build: mtk-data/images/elasticsearch
+  build: mkt-data/images/elasticsearch
   environment:
     - TERM=xterm-256color
   ports:
