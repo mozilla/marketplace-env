@@ -101,6 +101,7 @@ zamboni:
   build: trees/zamboni
   command: /bin/bash /srv/zamboni/bin/docker_run.sh
   environment:
+    - FXA_CLIENT_ID=7943afb7b9f54089
     - PYTHONUNBUFFERED=1
     - PYTHONDONTWRITEBYTECODE=1
     - TERM=xterm-256color
