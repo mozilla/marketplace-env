@@ -2,7 +2,7 @@
 
 SCRIPTPATH=$( cd $(dirname $0) ; pwd -P )
 ROOTPATH=$(dirname ${SCRIPTPATH})
-BOOT2DOCKERPATH=${ROOTPATH}/base-images/boot2docker
+BOOT2DOCKERPATH=${ROOTPATH}/mkt-base/base-images/boot2docker
 
 pushd $BOOT2DOCKERPATH > /dev/null
 
