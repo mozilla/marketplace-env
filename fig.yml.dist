@@ -1,5 +1,5 @@
 elasticsearch:
-  build: mkt-data/images/elasticsearch
+  build: {image}/elasticsearch
   environment:
     - TERM=xterm-256color
   ports:
@@ -7,18 +7,18 @@ elasticsearch:
     - "9300:9300"
 
 fireplace:
-  build: trees/fireplace
+  build: {tree}/fireplace
   command: /bin/bash /srv/fireplace/src/bin/docker_run.sh
   environment:
     - TERM=xterm-256color
     - BOWER_PATH=/srv/fireplace/bower_components/
     - GULP_CONFIG_PATH=/srv/fireplace/src/config
   volumes:
-    - trees/fireplace/:/srv/fireplace/src
+    - {tree}/fireplace/:/srv/fireplace/src
   working_dir: /srv/fireplace/src
 
 nginx:
-  build: mkt-data/images/nginx
+  build: {image}/nginx
   command: nginx -c /etc/nginx/nginx.conf -g "daemon off;"
   environment:
     - TERM=xterm-256color
@@ -31,33 +31,33 @@ nginx:
   ports:
     - '80:80'
   volumes:
-    - trees/spartacus/public/:/srv/spartacus
-    - trees/fireplace/src/:/srv/fireplace
-    - trees/zamboni/:/srv/zamboni
+    - {tree}/spartacus/public/:/srv/spartacus
+    - {tree}/fireplace/src/:/srv/fireplace
+    - {tree}/zamboni/:/srv/zamboni
 
 memcached:
-  build: mkt-data/images/memcached
+  build: {image}/memcached
   command: memcached -u nobody
   environment:
     - TERM=xterm-256color
 
 mysqldata:
-  build: mkt-data/images/mysql-data
+  build: {image}/mysql-data
 
 mysql:
-  build: mkt-data/images/mysql-service
+  build: {image}/mysql-service
   environment:
     - TERM=xterm-256color
   volumes_from:
     - mysqldata
 
 redis:
-  build: mkt-data/images/redis
+  build: {image}/redis
   environment:
     - TERM=xterm-256color
 
 solitude:
-  build: trees/solitude
+  build: {tree}/solitude
   command: /bin/bash /srv/solitude/bin/docker_run.sh
   environment:
     - PYTHONUNBUFFERED=1
@@ -69,20 +69,20 @@ solitude:
     - mysql:mysql
     - zippy:zippy
   volumes:
-    - trees/solitude/:/srv/solitude
+    - {tree}/solitude/:/srv/solitude
   working_dir: /srv/solitude
 
 spartacus:
-  build: trees/spartacus
+  build: {tree}/spartacus
   command: "grunt docker"
   environment:
     - TERM=xterm-256color
   volumes:
-    - trees/spartacus/:/srv/spartacus/src
+    - {tree}/spartacus/:/srv/spartacus/src
   working_dir: /srv/spartacus/src
 
 webpay:
-  build: trees/webpay
+  build: {tree}/webpay
   command: /bin/bash /srv/webpay/bin/docker_run.sh
   environment:
     - MKT_HOSTNAME=mp.dev
@@ -94,11 +94,11 @@ webpay:
     - zippy:zippy
     - solitude:solitude
   volumes:
-    - trees/webpay/:/srv/webpay
+    - {tree}/webpay/:/srv/webpay
   working_dir: /srv/webpay
 
 zamboni:
-  build: trees/zamboni
+  build: {tree}/zamboni
   command: /bin/bash /srv/zamboni/bin/docker_run.sh
   environment:
     - FXA_CLIENT_ID=7943afb7b9f54089
@@ -111,16 +111,16 @@ zamboni:
     - elasticsearch:elasticsearch
     - solitude:solitude
   volumes:
-    - trees/zamboni/:/srv/zamboni
+    - {tree}/zamboni/:/srv/zamboni
   working_dir: /srv/zamboni
 
 zippy:
-  build: trees/zippy
+  build: {tree}/zippy
   command: "grunt start --port 2605 --noauth"
   environment:
     - TERM=xterm-256color
   links:
     - redis:redis
   volumes:
-    - trees/zippy/:/srv/zippy/src
+    - {tree}/zippy/:/srv/zippy/src
   working_dir: /srv/zippy/src
