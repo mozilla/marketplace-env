@@ -16,6 +16,7 @@ import netifaces
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 join = functools.partial(os.path.join, ROOT)
 CONFIG_PATH = os.path.expanduser('~/.wharfie')
+FIG_PATH = os.getenv('FIG_FILE', os.path.expanduser('~/.mkt.fig.yml'))
 
 BRANCHES = [
     'fireplace',
@@ -28,47 +29,10 @@ BRANCHES = [
 
 
 # Command functions:
-def get_config_value(section, key, default=None):
-    config = configparser.ConfigParser()
-    config.read(CONFIG_PATH)
-    try:
-        return config.get(section, key)
-    except configparser.NoSectionError:
-        pass
-    return default
-
-
-def set_config_value(section, key, value):
-    config = configparser.ConfigParser()
-    config.read(CONFIG_PATH)
-    try:
-        config.add_section(section)
-    except configparser.DuplicateSectionError:
-        pass
-    config.set(section, key, value)
-    print('Saving {0} to {1}'.format(key, CONFIG_PATH))
-
-    with open(CONFIG_PATH, 'w') as configfile:
-        config.write(configfile)
-
-
-def get_dir(*args):
-    root_dir = get_config_value('paths', 'root', ROOT)
-    result = os.path.join(root_dir, *args)
-    return result
-
-
-def indent(text, times=1):
-    wrapper = textwrap.TextWrapper(
-        initial_indent='  '*times, width=90, subsequent_indent='  '*times
-    )
-    for line in text.splitlines():
-        print wrapper.fill(line)
-
 
 def check_git_config(args, parser):
     for branch in BRANCHES:
-        branch_dir = get_dir('trees', branch)
+        branch_dir = join(locations()['trees'], branch)
         cur_dir = os.getcwd()
         if os.path.isdir(branch_dir):
             try:
@@ -86,6 +50,9 @@ def check_git_config(args, parser):
 
 
 def checkout(args, parser, gh_username=None):
+    if not locations()['tree']:
+        parser.error('Please set a location by calling root first.')
+
     if not gh_username:
         gh_username = whoami(quiet=True)
     if not gh_username:
@@ -93,7 +60,7 @@ def checkout(args, parser, gh_username=None):
                      'command first')
 
     for branch in BRANCHES:
-        branch_dir = get_dir('trees', branch)
+        branch_dir = join(locations()['tree'], branch)
         if not os.path.isdir(branch_dir):
             subprocess.call([
                 'git', 'clone', '-o', args.moz_remote_name,
@@ -136,6 +103,59 @@ def shell(args, parser):
     image_name = image['name']
     return subprocess.call(['docker', 'run', '-a', 'stdin', '-a', 'stdout',
                             '-i', '-t', image_name + '_img', '/bin/bash'])
+
+
+def locations():
+    return {
+        # Where the checked out projects live.
+        'tree': get_config_value('paths', 'root'),
+        # Where the images live, will be local or in the installed path.
+        'image': join('mkt-data', 'images'),
+        # Where fig config lives, will be local or in the installed file path.
+        'fig.dist': join('fig.yml.dist'),
+        # FIG_FILE is the file that fig uses.
+        'fig': FIG_PATH
+    }
+
+
+def root(args, parser):
+    directory = os.path.abspath(os.path.expandvars(args.directory))
+    if not os.path.exists(directory):
+        raise ValueError('Directory {0} does not exist.'.format(directory))
+
+    set_config_value('paths', 'root', directory)
+    update(args, parser)
+
+
+def update(args, parser):
+    context = locations()
+    src_file = context['fig.dist']
+    with open(src_file, 'r') as src:
+        src_data = src.read()
+
+    dest_file = context['fig']
+    with open(dest_file, 'w') as dest:
+        print 'Written fig file to {0}'.format(FIG_PATH)
+        dest.write(src_data.format(**context))
+
+
+def check(args, parser):
+    context = locations()
+    default = os.getenv('FIG_FILE')
+    if context['fig'] != default:
+        print 'Set the following environment variable: '
+        print 'FIG_FILE={0}'.format(FIG_PATH)
+        print
+
+    for path in ['tree', 'image']:
+        if not os.path.exists(context[path]):
+            print 'Directory {0} does not exist.'.format(context[path])
+
+    for branch in BRANCHES:
+        branch_dir = join(context['tree'], branch)
+        if not os.path.exists(branch_dir):
+            print ('Directory {0} does not exist, run checkout.'
+                   .format(branch_dir))
 
 
 def bind(args, parser):
@@ -205,6 +225,37 @@ def bind(args, parser):
 
 # Helper functions:
 
+def get_config_value(section, key, default=None):
+    config = configparser.ConfigParser()
+    config.read(CONFIG_PATH)
+    try:
+        return config.get(section, key)
+    except configparser.NoSectionError:
+        pass
+    return default
+
+
+def set_config_value(section, key, value):
+    config = configparser.ConfigParser()
+    config.read(CONFIG_PATH)
+    try:
+        config.add_section(section)
+    except configparser.DuplicateSectionError:
+        pass
+    config.set(section, key, value)
+    print('Saving {0} to {1}'.format(key, CONFIG_PATH))
+
+    with open(CONFIG_PATH, 'w') as configfile:
+        config.write(configfile)
+
+
+def indent(text, times=1):
+    wrapper = textwrap.TextWrapper(
+        initial_indent='  '*times, width=90, subsequent_indent='  '*times
+    )
+    for line in text.splitlines():
+        print wrapper.fill(line)
+
 
 @contextmanager
 def pushd(newdir):
@@ -224,7 +275,7 @@ def get_adb_devices():
 
 def get_image(args, parser):
     image_name = args.name
-    image_dir = get_dir('mkt-data', 'images', image_name)
+    image_dir = join(locations()['image'], image_name)
 
     if not os.path.isdir(image_dir) or not os.path.exists(image_dir):
         parser.error('image_dir: {0} does not exist. '
@@ -312,6 +363,19 @@ def create_parser():
         help='See each command for additional help',
         title='Sub-commands', description='Valid commands'
     )
+
+    parser_root = subparsers.add_parser(
+        'root', help='Create or update the root paths in the fig.yml.'
+    )
+    parser_root.add_argument(
+        'directory', help='Path to the marketplace repositories.'
+    )
+    parser_root.set_defaults(func=root)
+
+    parser_check = subparsers.add_parser(
+        'check', help='Basic health checks of the system.'
+    )
+    parser_check.set_defaults(func=check)
 
     parser_shell = subparsers.add_parser(
         'shell', help='Run image, and drop into a shell on it.'
