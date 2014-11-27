@@ -385,7 +385,7 @@ def get_interface_data(interface=None):
 
 
 def create_parser():
-    parser = argparse.ArgumentParser(description='Wharfie')
+    parser = argparse.ArgumentParser()
 
     subparsers = parser.add_subparsers(
         help='See each command for additional help',
