@@ -114,7 +114,7 @@ def locations():
         # Where the images live, will be local or in the installed path.
         'image': join('mkt-data', 'images'),
         # Where fig config lives, will be local or in the installed file path.
-        'fig.dist': join('fig.yml.dist'),
+        'fig.dist': join('mkt-data', 'fig.yml.dist'),
         # FIG_FILE is the file that fig uses.
         'fig': FIG_PATH
     }

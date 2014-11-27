@@ -2,7 +2,7 @@
 #    mkt update
 #    mkt up
 #
-# You should alter the file fig.yml.dist.
+# You should alter the file mkt-data/fig.yml.dist.
 elasticsearch:
   build: {image}/elasticsearch
   environment:

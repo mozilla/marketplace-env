@@ -9,7 +9,7 @@ base_images += glob('mkt-data/base-images/mysql/yum/*')
 
 setup(
     name='marketplace-env',
-    version='0.1',
+    version='0.1.1',
     description='Tools for building the Firefox Marketplace using Docker.',
     author='Marketplace Developers',
     author_email='marketplace-devs@mozilla.com',
@@ -30,6 +30,7 @@ setup(
     data_files=[
         ('mkt-data/images', images),
         ('mkt-data/base-images', base_images),
+        ('mkt-data', ['mkt-data/fig.yml.dist']),
     ],
     requires=[
         'fig',

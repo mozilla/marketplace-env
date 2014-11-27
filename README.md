@@ -6,15 +6,19 @@ the backend, using Docker containers.
 * [Docker instructions](https://marketplace.readthedocs.org/en/latest/topics/backend.html)
 * [Marketplace documentation](https://marketplace.readthedocs.org)
 
-# Changes
+## Changes
 
-## 0.1
+### 0.1.1
+
+- fix fig.yml.dist paths in setup by moving to mkt-data
+
+### 0.1
 
 - Move to a library installable by pip.
 - Add in generating fig.yml through a template.
 - Add in commands root and up.
 
-## Upgrading to 0.1
+### Upgrading to 0.1
 
 We'd recommend not using a checked out version of marketplace-env anymore
 and switch over to pip installing mkt. If you do this be sure to preserve the
