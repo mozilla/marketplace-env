@@ -31,7 +31,7 @@ class TestCommands(TestCase):
         self.locations.return_value = {
             'tree': tempfile.mkdtemp(),
             'image': '/dir/images',
-            'fig.dist': os.path.join(cmds.ROOT, 'fig.yml.dist'),
+            'fig.dist': os.path.join(cmds.ROOT, 'mkt-data', 'fig.yml.dist'),
             'fig': tempfile.mkstemp()[1]
         }
         cmds.locations = self.locations
