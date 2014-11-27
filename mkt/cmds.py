@@ -31,6 +31,7 @@ BRANCHES = [
     'zippy',
 ]
 
+MIGRATIONS = ['zamboni', 'solitude']
 
 SERVICE_CHECKS = {
     'solitude': 'http://mp.dev/solitude/services/status/',
@@ -44,20 +45,16 @@ SERVICE_CHECKS = {
 def check_git_config(args, parser):
     for branch in BRANCHES:
         branch_dir = join(locations()['tree'], branch)
-        cur_dir = os.getcwd()
-        if os.path.isdir(branch_dir):
-            try:
-                os.chdir(branch_dir)
-                print "[{0}]".format(branch)
-                indent("[remotes]")
-                indent(subprocess.check_output(['git', 'remote', '-v']), 2)
-                indent("[Master branch origin]")
-                origin = subprocess.check_output(['git', 'config', '--get',
-                                                  'branch.master.remote'])
-                indent(origin, 2)
-                print
-            finally:
-                os.chdir(cur_dir)
+        with pushd(branch_dir):
+            os.chdir(branch_dir)
+            print "[{0}]".format(branch)
+            indent("[remotes]")
+            indent(subprocess.check_output(['git', 'remote', '-v']), 2)
+            indent("[Master branch origin]")
+            origin = subprocess.check_output(['git', 'config', '--get',
+                                              'branch.master.remote'])
+            indent(origin, 2)
+            print
 
 
 def checkout(args, parser, gh_username=None):
@@ -154,9 +151,7 @@ def update_config(args, parser):
 
 def up(args, parser):
     update_config(args, parser)
-    main.setup_logging()
-    cmd = main.TopLevelCommand()
-    cmd.dispatch(['up', '-d'], None)
+    fig_command('up', '-d', '--no-recreate')
 
 
 def bash(args, parser):
@@ -214,6 +209,32 @@ def check(args, parser):
                 print
                 pprint(res.json())
                 print
+
+
+def update(args, parser):
+    git, migration = args.git, args.migrations
+    if not git and not migration:
+        # If the user didn't pass a flag, run both.
+        git, migration = True, True
+
+    if git:
+        for branch in BRANCHES:
+            branch_dir = join(locations()['tree'], branch)
+            with pushd(branch_dir):
+                try:
+                    print 'Updating git for: {0}'.format(branch)
+                    indent(subprocess.check_output(['git', 'pull', '-q']), 2)
+                except subprocess.CalledProcessError:
+                    print
+                    print 'Failed to update: {0}'.format(branch_dir)
+                    print
+                    raise
+
+    if migration:
+        for migration in MIGRATIONS:
+            print 'Running migration for: {0}'.format(migration)
+            fig_command('run', '--rm', migration,
+                        'schematic', 'migrations')
 
 
 def bind(args, parser):
@@ -309,6 +330,15 @@ def get_fig_container(project):
     if not containers:
         raise ValueError('No containers found for: {0}'.format(project))
     return containers[0]
+
+
+def fig_command(*args):
+    cmd = main.TopLevelCommand()
+    try:
+        cmd.dispatch(args, None)
+    except SystemExit as exit:
+        if exit.code != 0:
+            raise
 
 
 def get_config_value(section, key, default=None):
@@ -467,6 +497,15 @@ def create_parser():
         action='store')
     parser_bash.set_defaults(func=bash)
 
+    parser_update = subparsers.add_parser(
+        'update', help='Runs git pull on each repo and any migrations.'
+    )
+    parser_update.add_argument(
+        '--git', help='Runs git pull', action='store_true')
+    parser_update.add_argument(
+        '--migrations', help='Runs migrations', action='store_true')
+    parser_update.set_defaults(func=update)
+
     parser_check = subparsers.add_parser(
         'check', help='Basic health checks of the system.'
     )
@@ -535,5 +574,10 @@ def create_parser():
         action='store_true')
     parser_bind.set_defaults(func=bind)
 
+<<<<<<< HEAD
     parser.add_argument('--version', action='version', version=__version__)
+=======
+    # Setup the logging for fig.
+    main.setup_logging()
+>>>>>>> add in update command
     return parser

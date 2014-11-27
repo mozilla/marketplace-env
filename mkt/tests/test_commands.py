@@ -59,7 +59,8 @@ class TestCommands(TestCase):
         cmds.locations = self.locations
         cmds.CONFIG_PATH = tempfile.mkstemp()[1]
         cmds.FIG_PATH = tempfile.mkstemp()[1]
-
+        cmds.BRANCHES = ['solitude']
+        cmds.MIGRATIONS = ['solitude']
 
     def test_get_image(self):
         self.args.name = 'whatever'
@@ -164,3 +165,20 @@ class TestCommands(TestCase):
         assert '{0}/webpay'.format(directory) in data
         # ANother rough check that volumes got set correctly.
         assert '/dir/images/elasticsearch'.format(directory) in data
+
+    def test_update(self):
+        args = self.parser.parse_args(['update'])
+        os.mkdir(os.path.join(self.locations()['tree'], 'solitude'))
+
+        with mock.patch('mkt.cmds.subprocess') as subprocess:
+            with mock.patch('mkt.cmds.fig_command') as fig:
+                cmds.update(args, self.parser)
+                subprocess.check_output.assert_called_with(
+                    ['git', 'pull', '-q'])
+                fig.assert_called_with(
+                    'run', '--rm', 'solitude', 'schematic', 'migrations')
+
+    def test_update_no_dir(self):
+        args = self.parser.parse_args(['update'])
+        with self.assertRaises(OSError):
+            cmds.update(args, self.parser)
