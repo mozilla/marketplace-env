@@ -34,7 +34,7 @@ BRANCHES = [
 
 def check_git_config(args, parser):
     for branch in BRANCHES:
-        branch_dir = join(locations()['trees'], branch)
+        branch_dir = join(locations()['tree'], branch)
         cur_dir = os.getcwd()
         if os.path.isdir(branch_dir):
             try:
