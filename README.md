@@ -8,6 +8,10 @@ the backend, using Docker containers.
 
 ## Changes
 
+### 0.1.2
+
+- fix images and base images paths in setup
+
 ### 0.1.1
 
 - fix fig.yml.dist paths in setup by moving to mkt-data
