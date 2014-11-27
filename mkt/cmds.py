@@ -12,6 +12,8 @@ from contextlib import contextmanager
 
 import netifaces
 
+from fig.cli import main
+
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 join = functools.partial(os.path.join, ROOT)
@@ -134,9 +136,25 @@ def update(args, parser):
         src_data = src.read()
 
     dest_file = context['fig']
+    new_data = src_data.format(**context)
+
+    if os.path.exists(dest_file):
+        # If the old file is the same as the new file, then there
+        # is no need to add anything new.
+        old_data = open(dest_file, 'r').read()
+        if old_data == new_data:
+            return
+
     with open(dest_file, 'w') as dest:
+        dest.write(new_data)
         print 'Written fig file to {0}'.format(FIG_PATH)
-        dest.write(src_data.format(**context))
+
+
+def up(args, parser):
+    update(args, parser)
+    main.setup_logging()
+    cmd = main.TopLevelCommand()
+    cmd.dispatch(['up', '-d'], None)
 
 
 def check(args, parser):
@@ -377,6 +395,12 @@ def create_parser():
     )
     parser_check.set_defaults(func=check)
 
+    parser_up = subparsers.add_parser(
+        'up', help='Recreates fig.yml and starts the '
+                   'containers in the background, a wrapper around `fig up`'
+    )
+    parser_up.set_defaults(func=up)
+
     parser_shell = subparsers.add_parser(
         'shell', help='Run image, and drop into a shell on it.'
     )
@@ -439,3 +463,4 @@ def create_parser():
     parser_bind.set_defaults(func=bind)
 
     return parser
+
