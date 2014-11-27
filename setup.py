@@ -33,7 +33,7 @@ setup(
     ],
     requires=[
         'fig',
-        'netifaces',
+        'netifaces'
     ],
     zip_safe=False
 )

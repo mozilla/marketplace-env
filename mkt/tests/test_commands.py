@@ -27,17 +27,33 @@ class TestCommands(TestCase):
         self.parser = cmds.create_parser()
         self.args = mock.Mock()
 
+        self.locations = mock.Mock()
+        self.locations.return_value = {
+            'tree': tempfile.mkdtemp(),
+            'image': '/dir/images',
+            'fig.dist': os.path.join(cmds.ROOT, 'fig.yml.dist'),
+            'fig': tempfile.mkstemp()[1]
+        }
+        cmds.locations = self.locations
+
     def test_get_image(self):
         self.args.name = 'whatever'
         with self.assertRaises(SystemExit):
             cmds.get_image(self.args, self.parser)
 
-    @mock.patch('mkt.cmds.BRANCHES', ['foo'])
-    @mock.patch('mkt.cmds.get_dir')
-    def test_checkout_command(self, get_dir):
-        """Test checkout cmd sees correct args."""
-        get_dir.return_value = '/dir/foo'
+    def test_checkout_no_root(self):
+        self.locations.return_value['tree'] = None
+        cmds.locations = self.locations
+
         args = self.parser.parse_args(['checkout'])
+        with self.assertRaises(SystemExit):
+            cmds.checkout(args, self.parser, 'gh-user')
+
+    @mock.patch('mkt.cmds.BRANCHES', ['foo'])
+    def test_checkout_command(self):
+        """Test checkout cmd sees correct args."""
+        args = self.parser.parse_args(['checkout'])
+        directory = self.locations()['tree']
         with mock.patch('mkt.cmds.subprocess') as subprocess:
 
             cmds.checkout(args, self.parser, 'gh-user')
@@ -46,12 +62,12 @@ class TestCommands(TestCase):
                 mock.call([
                     'git', 'clone', '-o', 'upstream',
                     'git@github.com:mozilla/foo.git',
-                    '/dir/foo'
+                    '{0}/foo'.format(directory)
                 ]),
                 mock.call([
                     'git', 'remote', 'add', 'origin',
                     'git@github.com:gh-user/foo.git'
-                ], cwd='/dir/foo'),
+                ], cwd='{0}/foo'.format(directory)),
                 mock.call([
                     'git', 'config',
                     'branch.master.remote', 'origin'
@@ -59,16 +75,15 @@ class TestCommands(TestCase):
             ])
 
     @mock.patch('mkt.cmds.BRANCHES', ['foo'])
-    @mock.patch('mkt.cmds.get_dir')
-    def test_checkout_command_inverted_origin_upstream(self, get_dir):
+    def test_checkout_command_inverted_origin_upstream(self):
         """Test checkout cmd sees correct args when origin is inverted."""
-        get_dir.return_value = '/dir/foo'
-
         args = self.parser.parse_args([
             'checkout',
             '--moz_remote_name', 'origin',
             '--fork_remote_name', 'upstream'
         ])
+        directory = self.locations()['tree']
+
         with mock.patch('mkt.cmds.subprocess') as subprocess:
 
             cmds.checkout(args, self.parser, 'gh-user')
@@ -77,12 +92,12 @@ class TestCommands(TestCase):
                 mock.call([
                     'git', 'clone', '-o', 'origin',
                     'git@github.com:mozilla/foo.git',
-                    '/dir/foo'
+                    '{0}/foo'.format(directory)
                 ]),
                 mock.call([
                     'git', 'remote', 'add', 'upstream',
                     'git@github.com:gh-user/foo.git'
-                ], cwd='/dir/foo'),
+                ], cwd='{0}/foo'.format(directory)),
                 mock.call([
                     'git', 'config',
                     'branch.master.remote', 'upstream'
@@ -114,3 +129,13 @@ class TestCommands(TestCase):
                 mock.call(['adb', 'pull', '/system/etc/hosts', './']),
                 mock.call(['adb', 'push', './new-hosts', '/system/etc/hosts'])
             ])
+
+    def test_root(self):
+        directory = self.locations()['tree']
+        args = self.parser.parse_args(['root', directory])
+        cmds.root(args, self.parser)
+        data = open(self.locations()['fig'], 'r').read()
+        # Just a rough assertion that the build variable got changed.
+        assert '{0}/webpay'.format(directory) in data
+        # ANother rough check that volumes got set correctly.
+        assert '/dir/images/elasticsearch'.format(directory) in data
