@@ -126,10 +126,10 @@ def root(args, parser):
         raise ValueError('Directory {0} does not exist.'.format(directory))
 
     set_config_value('paths', 'root', directory)
-    update(args, parser)
+    update_config(args, parser)
 
 
-def update(args, parser):
+def update_config(args, parser):
     context = locations()
     src_file = context['fig.dist']
     with open(src_file, 'r') as src:
@@ -151,7 +151,7 @@ def update(args, parser):
 
 
 def up(args, parser):
-    update(args, parser)
+    update_config(args, parser)
     main.setup_logging()
     cmd = main.TopLevelCommand()
     cmd.dispatch(['up', '-d'], None)
