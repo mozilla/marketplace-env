@@ -160,9 +160,19 @@ def up(args, parser):
 def check(args, parser):
     context = locations()
     default = os.getenv('FIG_FILE')
+
+    diffs = []
     if context['fig'] != default:
-        print 'Set the following environment variable: '
-        print 'FIG_FILE={0}'.format(FIG_PATH)
+        diffs.append('FIG_FILE={0}'.format(FIG_PATH))
+
+    default = os.getenv('FIG_PROJECT_NAME')
+    if 'mkt' != os.getenv('FIG_PROJECT_NAME'):
+        diffs.append('FIG_PROJECT_NAME=mkt')
+
+    if diffs:
+        print 'Set the following environment variables: '
+        for d in diffs:
+            print d
         print
 
     for path in ['tree', 'image']:
