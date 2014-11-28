@@ -34,15 +34,21 @@ checkouts should live, whereas the old version checked it all out into "trees".
 However, if you've previously got marketplace-env (or wharfie) checked out then
 you should be able to update and run the following commands:
 
+```shell
   bin/mkt root trees
+```
 
 And then add the two environment variables:
 
+```shell
   export FIG_FILE=~/.mkt.fig.yml
   export FIG_PROJECT_NAME=mkt
+```
 
-You'll then need to a:
+You'll then need to run:
 
+```shell
   fig build
+```
 
 After that you should be good to go.
