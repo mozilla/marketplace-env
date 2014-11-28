@@ -2,6 +2,7 @@ import argparse
 import ConfigParser as configparser
 import functools
 import os
+import re
 import shutil
 import socket
 import subprocess
@@ -9,7 +10,11 @@ import sys
 import tempfile
 import textwrap
 from contextlib import contextmanager
+<<<<<<< HEAD
 from pprint import pprint
+=======
+from decimal import Decimal
+>>>>>>> add in --versions to check
 
 import netifaces
 import requests
@@ -31,6 +36,7 @@ BRANCHES = [
     'zippy',
 ]
 
+<<<<<<< HEAD
 MIGRATIONS = ['zamboni', 'solitude']
 
 SERVICE_CHECKS = {
@@ -40,6 +46,8 @@ SERVICE_CHECKS = {
 }
 
 
+=======
+>>>>>>> add in --versions to check
 # Command functions:
 
 def check_git_config(args, parser):
@@ -182,6 +190,30 @@ def bash(args, parser):
     return
 
 
+def get_version(method):
+    methods = {
+        'docker': ['^Docker version (\d.\d)', ['docker', '-v']],
+        'boot2docker': [
+            '^Boot2Docker-cli version: v(\d.\d)',
+            ['boot2docker', 'version']
+        ],
+        'fig': ['^fig (\d.\d)', ['fig', '--version']]
+    }
+    regex, command = methods[method]
+    try:
+        result = subprocess.check_output(command).strip()
+    except OSError:
+        raise ValueError('Command: "{0}" failed, is it installed?'
+                         .format(' '.join(command)))
+
+    try:
+        re.findall(regex, result)[0]
+    except IndexError:
+        raise ValueError('Command: "{0}" returned an unknown value.'
+                         .format(' '.join(command)))
+    return Decimal(re.findall(regex, result)[0])
+
+
 def check(args, parser):
     context = locations()
     default = os.getenv('FIG_FILE')
@@ -230,31 +262,13 @@ def check(args, parser):
                 pprint(res.json())
                 print
 
-
-def update(args, parser):
-    git, migration = args.git, args.migrations
-    if not git and not migration:
-        # If the user didn't pass a flag, run both.
-        git, migration = True, True
-
-    if git:
-        for branch in BRANCHES:
-            branch_dir = join(locations()['tree'], branch)
-            with pushd(branch_dir):
-                try:
-                    print 'Updating git for: {0}'.format(branch)
-                    indent(subprocess.check_output(['git', 'pull', '-q']), 2)
-                except subprocess.CalledProcessError:
-                    print
-                    print 'Failed to update: {0}'.format(branch_dir)
-                    print
-                    raise
-
-    if migration:
-        for migration in MIGRATIONS:
-            print 'Running migration for: {0}'.format(migration)
-            fig_command('run', '--rm', migration,
-                        'schematic', 'migrations')
+    if args.versions:
+        if get_version('docker') < Decimal('1.3'):
+            print 'Update your docker, version 1.3 or higher recommended.'
+        if get_version('boot2docker') < Decimal('1.3'):
+            print 'Update your boot2docker, version 1.3 or higher recommended.'
+        if get_version('fig') < Decimal('1.0'):
+            print 'Update your fig, version 1.0 or higher recommended.'
 
 
 def bind(args, parser):
@@ -532,6 +546,10 @@ def create_parser():
     )
     parser_check.add_argument(
         '--services', help='Checks the status page of each service.',
+        action='store_true'
+    )
+    parser_check.add_argument(
+        '--versions', help='Checks versions of docker, boot2docker and fig',
         action='store_true'
     )
     parser_check.set_defaults(func=check)
