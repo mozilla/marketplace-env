@@ -11,7 +11,7 @@ files = [(os.path.dirname(f), (f,)) for f in files]
 
 setup(
     name='marketplace-env',
-    version='0.1.3',
+    version='0.1.4',
     description='Tools for building the Firefox Marketplace using Docker.',
     author='Marketplace Developers',
     author_email='marketplace-devs@mozilla.com',
