@@ -35,6 +35,9 @@ class TestCommands(TestCase):
             'fig': tempfile.mkstemp()[1]
         }
         cmds.locations = self.locations
+        cmds.CONFIG_PATH = tempfile.mkstemp()[1]
+        cmds.FIG_PATH = tempfile.mkstemp()[1]
+
 
     def test_get_image(self):
         self.args.name = 'whatever'
