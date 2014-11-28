@@ -13,7 +13,7 @@ from contextlib import contextmanager
 import netifaces
 
 from fig.cli import main
-
+from version import __version__
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 join = functools.partial(os.path.join, ROOT)
@@ -457,5 +457,5 @@ def create_parser():
         action='store_true')
     parser_bind.set_defaults(func=bind)
 
+    parser.add_argument('--version', action='version', version=__version__)
     return parser
-
