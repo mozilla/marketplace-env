@@ -23,16 +23,6 @@ class TestArgs(TestCase):
         args = self.parser.parse_args(['whoami', 'bungle'])
         self.assertEqual(args.github_username, 'bungle')
 
-    def test_shell(self):
-        """User passes shell command"""
-        args = self.parser.parse_args(['shell', 'redis'])
-        self.assertEqual(args.func.func_name, 'shell')
-
-    def test_shell_no_image(self):
-        """User passes shell command no image"""
-        with self.assertRaises(SystemExit):
-            self.parser.parse_args(['shell'])
-
     def test_checkout(self):
         """User passes checkout command"""
         args = self.parser.parse_args(['checkout'])
