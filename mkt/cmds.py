@@ -15,7 +15,7 @@ import netifaces
 from fig.cli import main
 
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.abspath(__file__))
 join = functools.partial(os.path.join, ROOT)
 CONFIG_PATH = os.path.expanduser('~/.wharfie')
 FIG_PATH = os.getenv('FIG_FILE', os.path.expanduser('~/.mkt.fig.yml'))
@@ -112,9 +112,9 @@ def locations():
         # Where the checked out projects live.
         'tree': get_config_value('paths', 'root'),
         # Where the images live, will be local or in the installed path.
-        'image': join('mkt-data', 'images'),
+        'image': join('data', 'images'),
         # Where fig config lives, will be local or in the installed file path.
-        'fig.dist': join('mkt-data', 'fig.yml.dist'),
+        'fig.dist': join('data', 'fig.yml.dist'),
         # FIG_FILE is the file that fig uses.
         'fig': FIG_PATH
     }

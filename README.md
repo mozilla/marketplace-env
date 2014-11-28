@@ -8,6 +8,10 @@ the backend, using Docker containers.
 
 ## Changes
 
+### 0.1.3-5
+
+- Various fixes to packaging just because.
+
 ### 0.1.2
 
 - fix images and base images paths in setup

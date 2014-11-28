@@ -1,17 +1,26 @@
 import os
-from glob import glob
 from setuptools import setup
 
-files = ['mkt-data/fig.yml.dist']
-files += glob('mkt-data/images/*/*')
-files += glob('mkt-data/base-images/*/Dockerfile')
-files += glob('mkt-data/base-images/mysql/yum/*')
 
-files = [(os.path.dirname(f), (f,)) for f in files]
+def get_package_data(package):
+    """
+    Return all files under the root package, that are not in a
+    package themselves. Copied from django_rest_framework.
+    """
+    walk = [(dirpath.replace(package + os.sep, '', 1), filenames)
+            for dirpath, dirnames, filenames in os.walk(package)
+            if not os.path.exists(os.path.join(dirpath, '__init__.py'))]
+    filepaths = []
+
+    for base, filenames in walk:
+        filepaths.extend([os.path.join(base, filename)
+                         for filename in filenames])
+    return {package: filepaths}
+
 
 setup(
     name='marketplace-env',
-    version='0.1.4',
+    version='0.1.5',
     description='Tools for building the Firefox Marketplace using Docker.',
     author='Marketplace Developers',
     author_email='marketplace-devs@mozilla.com',
@@ -29,7 +38,7 @@ setup(
             'mkt = mkt.bin:main'
         ]
     },
-    data_files=files,
+    package_data=get_package_data('mkt'),
     install_requires=[
         'fig',
         'netifaces'
