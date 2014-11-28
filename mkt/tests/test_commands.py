@@ -178,6 +178,15 @@ class TestCommands(TestCase):
                 fig.assert_called_with(
                     'run', '--rm', 'solitude', 'schematic', 'migrations')
 
+    def test_update_git_only(self):
+        args = self.parser.parse_args(['update', '--git'])
+        os.mkdir(os.path.join(self.locations()['tree'], 'solitude'))
+        with mock.patch('mkt.cmds.subprocess') as subprocess:
+            with mock.patch('mkt.cmds.fig_command') as fig:
+                cmds.update(args, self.parser)
+                assert subprocess.check_output.called
+                assert not fig.called
+
     def test_update_no_dir(self):
         args = self.parser.parse_args(['update'])
         with self.assertRaises(OSError):

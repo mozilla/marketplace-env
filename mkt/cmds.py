@@ -574,10 +574,7 @@ def create_parser():
         action='store_true')
     parser_bind.set_defaults(func=bind)
 
-<<<<<<< HEAD
     parser.add_argument('--version', action='version', version=__version__)
-=======
     # Setup the logging for fig.
     main.setup_logging()
->>>>>>> add in update command
     return parser
