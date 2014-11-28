@@ -38,7 +38,7 @@ you should be able to update and run the following commands:
 
 And then add the two environment variables:
 
-  export FIG_FILE=~/.fig.mkt.yml
+  export FIG_FILE=~/.mkt.fig.yml
   export FIG_PROJECT_NAME=mkt
 
 You'll then need to a:
