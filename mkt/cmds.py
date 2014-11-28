@@ -100,13 +100,6 @@ def whoami(args=None, parser=None, quiet=False):
     return user
 
 
-def shell(args, parser):
-    image = get_image(args, parser)
-    image_name = image['name']
-    return subprocess.call(['docker', 'run', '-a', 'stdin', '-a', 'stdout',
-                            '-i', '-t', image_name + '_img', '/bin/bash'])
-
-
 def locations():
     return {
         # Where the checked out projects live.
@@ -411,14 +404,6 @@ def create_parser():
     )
     parser_up.set_defaults(func=up)
 
-    parser_shell = subparsers.add_parser(
-        'shell', help='Run image, and drop into a shell on it.'
-    )
-    parser_shell.add_argument(
-        'name', help='The name of the image to run a shell on',
-        metavar="IMAGE_NAME",
-    )
-    parser_shell.set_defaults(func=shell)
     parser_shell = subparsers.add_parser(
         'chkgitconfig', help='Print out the git config for mkt branches'
     )
