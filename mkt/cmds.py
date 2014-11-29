@@ -9,8 +9,10 @@ import sys
 import tempfile
 import textwrap
 from contextlib import contextmanager
+from pprint import pprint
 
 import netifaces
+import requests
 
 from fig.cli import main
 
@@ -28,6 +30,13 @@ BRANCHES = [
     'zamboni',
     'zippy',
 ]
+
+
+SERVICE_CHECKS = {
+    'solitude': 'http://mp.dev/solitude/services/status/',
+    'webpay': 'http://mp.dev/mozpay/services/monitor',
+    'zamboni': 'http://mp.dev/services/monitor.json'
+}
 
 
 # Command functions:
@@ -177,6 +186,26 @@ def check(args, parser):
         if not os.path.exists(branch_dir):
             print ('Directory {0} does not exist, run checkout.'
                    .format(branch_dir))
+
+    if args.services:
+        for service, url in SERVICE_CHECKS.items():
+            try:
+                res = requests.get(url, timeout=5)
+            except (requests.exceptions.Timeout,
+                    requests.exceptions.ConnectionError):
+                # nginx isn't even up.
+                print 'Timeout on: {0}, is it running?'.format(service)
+                continue
+
+            if res.status_code == 502:
+                # nginx proxy errors.
+                print 'Service not up: {0} (proxy error)'.format(service)
+
+            if res.status_code == 500:
+                print 'Status failed on: {0}.'.format(service)
+                print
+                pprint(res.json())
+                print
 
 
 def bind(args, parser):
@@ -395,6 +424,10 @@ def create_parser():
 
     parser_check = subparsers.add_parser(
         'check', help='Basic health checks of the system.'
+    )
+    parser_check.add_argument(
+        '--services', help='Checks the status page of each service.',
+        action='store_true'
     )
     parser_check.set_defaults(func=check)
 
