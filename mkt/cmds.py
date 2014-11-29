@@ -150,6 +150,14 @@ def up(args, parser):
     cmd.dispatch(['up', '-d'], None)
 
 
+def bash(args, parser):
+    project = get_project(args.project)
+    cmd = ('docker exec -t -i {0} /bin/bash'
+           .format(get_fig_container(project).id))
+    os.system(cmd)
+    return
+
+
 def check(args, parser):
     context = locations()
     default = os.getenv('FIG_FILE')
@@ -245,6 +253,34 @@ def bind(args, parser):
 
 
 # Helper functions:
+
+def get_project(project):
+    cur = os.getcwd()
+
+    def walk(directory):
+        if 'Dockerfile' in os.listdir(directory):
+            return os.path.basename(directory)
+
+        new = os.path.dirname(directory)
+        if new == directory:
+            raise ValueError('No project found.')
+        return walk(new)
+
+    project = project or walk(cur)
+    if project not in BRANCHES:
+        raise ValueError('Project {0} not in BRANCHES'.format(project))
+
+    return project
+
+
+def get_fig_container(project):
+    cmd = main.Command()
+    proj = cmd.get_project(FIG_PATH)
+    containers = proj.containers(service_names=[project])
+    if not containers:
+        raise ValueError('No containers found for: {0}'.format(project))
+    return containers[0]
+
 
 def get_config_value(section, key, default=None):
     config = configparser.ConfigParser()
@@ -392,6 +428,15 @@ def create_parser():
         'directory', help='Path to the marketplace repositories.'
     )
     parser_root.set_defaults(func=root)
+
+    parser_bash = subparsers.add_parser(
+        'bash', help='Basic health checks of the system.'
+    )
+    parser_bash.add_argument(
+        '--project',
+        help='Project name, if not given will be calculated.',
+        action='store')
+    parser_bash.set_defaults(func=bash)
 
     parser_check = subparsers.add_parser(
         'check', help='Basic health checks of the system.'
