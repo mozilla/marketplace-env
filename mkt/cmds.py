@@ -194,7 +194,7 @@ def check(args, parser):
             except (requests.exceptions.Timeout,
                     requests.exceptions.ConnectionError):
                 # nginx isn't even up.
-                print 'Timeout on: {0}, is it running?'.format(service)
+                print 'Error on: {0}, is it running?'.format(service)
                 continue
 
             if res.status_code == 502:
