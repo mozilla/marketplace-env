@@ -1,5 +1,14 @@
 import os
+import re
 from setuptools import setup
+
+
+def get_version(package):
+    """
+    Return package version as listed in `__version__` in `version.py`.
+    """
+    init_py = open(os.path.join(package, 'version.py')).read()
+    return re.search("__version__ = ['\"]([^'\"]+)['\"]", init_py).group(1)
 
 
 def get_package_data(package):
@@ -20,7 +29,7 @@ def get_package_data(package):
 
 setup(
     name='marketplace-env',
-    version='0.1.5',
+    version=get_version('mkt'),
     description='Tools for building the Firefox Marketplace using Docker.',
     author='Marketplace Developers',
     author_email='marketplace-devs@mozilla.com',
