@@ -459,7 +459,7 @@ def create_parser():
     parser_root.set_defaults(func=root)
 
     parser_bash = subparsers.add_parser(
-        'bash', help='Basic health checks of the system.'
+        'bash', help='Run a bash shell on a running container.'
     )
     parser_bash.add_argument(
         '--project',
@@ -482,13 +482,13 @@ def create_parser():
     )
     parser_up.set_defaults(func=up)
 
-    parser_shell = subparsers.add_parser(
+    parser_checkgitconfig = subparsers.add_parser(
         'chkgitconfig', help='Print out the git config for mkt branches'
     )
-    parser_shell.set_defaults(func=check_git_config)
+    parser_checkgitconfig.set_defaults(func=check_git_config)
 
     parser_whoami = subparsers.add_parser(
-        'whoami', help='Check your github credentials'
+        'whoami', help='Check or store your github credentials'
     )
     parser_whoami.add_argument(
         'github_username', help='Your github username e.g. "jrrtolkien"',
