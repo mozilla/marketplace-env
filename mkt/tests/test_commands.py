@@ -21,6 +21,28 @@ class TestConfig(TestCase):
             assert cmds.get_config_value('nope', 'k') == 'p'
 
 
+class TestProjectAndContainer(TestCase):
+
+    def test_no_dockerfile(self):
+        with mock.patch('os.listdir') as listdir:
+            listdir.return_value = []
+            with self.assertRaises(ValueError):
+                cmds.get_project(None)
+
+    def test_no_project(self):
+        with mock.patch('os.listdir') as listdir:
+            assert not listdir.called
+            with self.assertRaises(ValueError):
+                cmds.get_project('wat')
+
+    def test_project(self):
+        with mock.patch('os.listdir') as listdir:
+            with mock.patch('os.path.basename') as basename:
+                basename.return_value = 'solitude'
+                listdir.return_value = ['Dockerfile']
+                assert cmds.get_project(None) == 'solitude'
+
+
 class TestCommands(TestCase):
 
     def setUp(self):
