@@ -1,3 +1,4 @@
+argcomplete==0.8.3
 docker-py==0.5.3
 dockerpty==0.3.2
 docopt==0.6.1

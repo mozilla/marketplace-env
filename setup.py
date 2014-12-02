@@ -49,9 +49,9 @@ setup(
     },
     package_data=get_package_data('mkt'),
     install_requires=[
+        'argcomplete',
         'fig',
         'netifaces'
     ],
     zip_safe=False
 )
-
