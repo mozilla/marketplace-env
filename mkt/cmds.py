@@ -57,6 +57,20 @@ def check_git_config(args, parser):
             print
 
 
+def revs(args, parser):
+    for branch in BRANCHES:
+        branch_dir = join(locations()['tree'], branch)
+        with pushd(branch_dir):
+            os.chdir(branch_dir)
+            active_branch = subprocess.check_output([
+                'git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+            rev = subprocess.check_output([
+                'git', 'log', '-n', '1',
+                '--pretty=oneline', '--abbrev-commit'])
+            print "{0}: {1} [{2}]".format(branch, rev.split()[0],
+                                          active_branch.rstrip())
+
+
 def checkout(args, parser, gh_username=None):
     if not locations()['tree']:
         parser.error('Please set a location by calling root first.')
@@ -525,6 +539,11 @@ def create_parser():
         'chkgitconfig', help='Print out the git config for mkt branches'
     )
     parser_checkgitconfig.set_defaults(func=check_git_config)
+
+    parser_revs = subparsers.add_parser(
+        'revs', help='Print out the git revs for the trees'
+    )
+    parser_revs.set_defaults(func=revs)
 
     parser_whoami = subparsers.add_parser(
         'whoami', help='Check or store your github credentials'
