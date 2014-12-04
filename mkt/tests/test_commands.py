@@ -166,6 +166,11 @@ class TestCommands(TestCase):
         # ANother rough check that volumes got set correctly.
         assert '/dir/images/elasticsearch'.format(directory) in data
 
+    def test_root_no_args(self):
+        args = self.parser.parse_args(['root'])
+        with mock.patch('mkt.cmds.set_config_value') as scv:
+            assert not scv.called
+
     def test_update(self):
         args = self.parser.parse_args(['update'])
         os.mkdir(os.path.join(self.locations()['tree'], 'solitude'))

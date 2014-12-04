@@ -134,6 +134,12 @@ def locations():
 
 
 def root(args, parser):
+    if not args.directory:
+        value = get_config_value('paths', 'root')
+        if value:
+            print value
+        return
+
     directory = os.path.abspath(os.path.expandvars(args.directory))
     if not os.path.exists(directory):
         raise ValueError('Directory {0} does not exist.'.format(directory))
@@ -498,7 +504,8 @@ def create_parser():
         'root', help='Create or update the root paths in the fig.yml.'
     )
     parser_root.add_argument(
-        'directory', help='Path to the marketplace repositories.'
+        'directory', help='Path to the marketplace repositories.',
+        default=None, nargs='?'
     )
     parser_root.set_defaults(func=root)
 
