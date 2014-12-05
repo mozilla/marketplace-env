@@ -12,7 +12,7 @@ deploy:
   password:
     secure: Q2ClHKjioMKLlnMPsno9eNwzIhSxAOEKHBLolNFpAXxnJfhQm0YEXr9JHAYIXVSkMicmgy2loi5QXhfNCPVkBrP1C8qJ6NVfA0bl96DQ8OYqr6oCZBZMFvKknOOiqL1VvGnilDDvrMoPoPiOR8ifZG3HpcVPL0xwka4iQQ99xoo=
   on:
-    branch: production
+    all_branches: true
     tags: true
 notifications:
   irc:
