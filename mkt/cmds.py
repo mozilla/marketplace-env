@@ -10,11 +10,8 @@ import sys
 import tempfile
 import textwrap
 from contextlib import contextmanager
-<<<<<<< HEAD
-from pprint import pprint
-=======
 from decimal import Decimal
->>>>>>> add in --versions to check
+from pprint import pprint
 
 import netifaces
 import requests
@@ -36,7 +33,6 @@ BRANCHES = [
     'zippy',
 ]
 
-<<<<<<< HEAD
 MIGRATIONS = ['zamboni', 'solitude']
 
 SERVICE_CHECKS = {
@@ -46,8 +42,6 @@ SERVICE_CHECKS = {
 }
 
 
-=======
->>>>>>> add in --versions to check
 # Command functions:
 
 def check_git_config(args, parser):
@@ -192,7 +186,10 @@ def bash(args, parser):
 
 def get_version(method):
     methods = {
-        'docker': ['^Docker version (\d.\d)', ['docker', '-v']],
+        'docker': [
+            'Client version: (\d.\d).*?Server version: (\d.\d)',
+            ['docker', 'version']
+        ],
         'boot2docker': [
             '^Boot2Docker-cli version: v(\d.\d)',
             ['boot2docker', 'version']
@@ -207,11 +204,14 @@ def get_version(method):
                          .format(' '.join(command)))
 
     try:
-        re.findall(regex, result)[0]
+        res = re.findall(regex, result, flags=re.S)
+        if isinstance(res[0], tuple):
+            res = res[0]
     except IndexError:
         raise ValueError('Command: "{0}" returned an unknown value.'
                          .format(' '.join(command)))
-    return Decimal(re.findall(regex, result)[0])
+
+    return [Decimal(v) for v in res]
 
 
 def check(args, parser):
@@ -263,12 +263,41 @@ def check(args, parser):
                 print
 
     if args.versions:
-        if get_version('docker') < Decimal('1.3'):
-            print 'Update your docker, version 1.3 or higher recommended.'
-        if get_version('boot2docker') < Decimal('1.3'):
-            print 'Update your boot2docker, version 1.3 or higher recommended.'
-        if get_version('fig') < Decimal('1.0'):
-            print 'Update your fig, version 1.0 or higher recommended.'
+        dockers = get_version('docker')
+        for version in dockers:
+            if version < Decimal('1.3'):
+                print ('Update docker, client or server version 1.3 or higher '
+                       'is recommended. Run: docker version')
+        if get_version('boot2docker')[0] < Decimal('1.3'):
+            print 'Update boot2docker, version 1.3 or higher recommended.'
+        if get_version('fig')[0] < Decimal('1.0'):
+            print 'Update fig, version 1.0 or higher recommended.'
+
+
+def update(args, parser):
+    git, migration = args.git, args.migrations
+    if not git and not migration:
+        # If the user didn't pass a flag, run both.
+        git, migration = True, True
+
+    if git:
+        for branch in BRANCHES:
+            branch_dir = join(locations()['tree'], branch)
+            with pushd(branch_dir):
+                try:
+                    print 'Updating git for: {0}'.format(branch)
+                    indent(subprocess.check_output(['git', 'pull', '-q']), 2)
+                except subprocess.CalledProcessError:
+                    print
+                    print 'Failed to update: {0}'.format(branch_dir)
+                    print
+                    raise
+
+    if migration:
+        for migration in MIGRATIONS:
+            print 'Running migration for: {0}'.format(migration)
+            fig_command('run', '--rm', migration,
+                        'schematic', 'migrations')
 
 
 def bind(args, parser):

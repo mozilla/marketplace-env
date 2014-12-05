@@ -60,9 +60,10 @@ class TestVersions(TestCase):
 
     def test_get_ok(self):
         with mock.patch('subprocess.check_output') as sub:
-            sub.return_value = 'Docker version 1.3.1b'
+            sub.return_value = 'Client version: 1.3.1b, Server version: 1.3'
             self.assertEquals(
-                cmds.get_version('docker'), Decimal('1.3')
+                cmds.get_version('docker'),
+                [Decimal('1.3'), Decimal('1.3')]
             )
 
 
