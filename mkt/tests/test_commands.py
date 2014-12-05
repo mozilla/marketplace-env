@@ -1,5 +1,6 @@
 import os
 import tempfile
+from decimal import Decimal
 from unittest import TestCase
 
 import mock
@@ -41,6 +42,29 @@ class TestProjectAndContainer(TestCase):
                 basename.return_value = 'solitude'
                 listdir.return_value = ['Dockerfile']
                 assert cmds.get_project(None) == 'solitude'
+
+
+class TestVersions(TestCase):
+
+    def test_get_fails(self):
+        with mock.patch('subprocess.check_output') as sub:
+            with self.assertRaises(ValueError):
+                sub.side_effect = OSError
+                cmds.get_version('docker')
+
+    def test_get_wrong(self):
+        with mock.patch('subprocess.check_output') as sub:
+            with self.assertRaises(ValueError):
+                sub.return_value = 'wat?'
+                cmds.get_version('docker')
+
+    def test_get_ok(self):
+        with mock.patch('subprocess.check_output') as sub:
+            sub.return_value = 'Client version: 1.3.1b, Server version: 1.3'
+            self.assertEquals(
+                cmds.get_version('docker'),
+                [Decimal('1.3'), Decimal('1.3')]
+            )
 
 
 class TestCommands(TestCase):

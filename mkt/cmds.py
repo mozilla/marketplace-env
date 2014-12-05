@@ -2,6 +2,7 @@ import argparse
 import ConfigParser as configparser
 import functools
 import os
+import re
 import shutil
 import socket
 import subprocess
@@ -9,6 +10,7 @@ import sys
 import tempfile
 import textwrap
 from contextlib import contextmanager
+from decimal import Decimal
 from pprint import pprint
 
 import netifaces
@@ -182,6 +184,36 @@ def bash(args, parser):
     return
 
 
+def get_version(method):
+    methods = {
+        'docker': [
+            'Client version: (\d.\d).*?Server version: (\d.\d)',
+            ['docker', 'version']
+        ],
+        'boot2docker': [
+            '^Boot2Docker-cli version: v(\d.\d)',
+            ['boot2docker', 'version']
+        ],
+        'fig': ['^fig (\d.\d)', ['fig', '--version']]
+    }
+    regex, command = methods[method]
+    try:
+        result = subprocess.check_output(command).strip()
+    except OSError:
+        raise ValueError('Command: "{0}" failed, is it installed?'
+                         .format(' '.join(command)))
+
+    try:
+        res = re.findall(regex, result, flags=re.S)
+        if isinstance(res[0], tuple):
+            res = res[0]
+    except IndexError:
+        raise ValueError('Command: "{0}" returned an unknown value.'
+                         .format(' '.join(command)))
+
+    return [Decimal(v) for v in res]
+
+
 def check(args, parser):
     context = locations()
     default = os.getenv('FIG_FILE')
@@ -229,6 +261,17 @@ def check(args, parser):
                 print
                 pprint(res.json())
                 print
+
+    if args.versions:
+        dockers = get_version('docker')
+        for version in dockers:
+            if version < Decimal('1.3'):
+                print ('Update docker, client or server version 1.3 or higher '
+                       'is recommended. Run: docker version')
+        if get_version('boot2docker')[0] < Decimal('1.3'):
+            print 'Update boot2docker, version 1.3 or higher recommended.'
+        if get_version('fig')[0] < Decimal('1.0'):
+            print 'Update fig, version 1.0 or higher recommended.'
 
 
 def update(args, parser):
@@ -532,6 +575,10 @@ def create_parser():
     )
     parser_check.add_argument(
         '--services', help='Checks the status page of each service.',
+        action='store_true'
+    )
+    parser_check.add_argument(
+        '--versions', help='Checks versions of docker, boot2docker and fig',
         action='store_true'
     )
     parser_check.set_defaults(func=check)
