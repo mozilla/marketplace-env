@@ -171,9 +171,12 @@ def update_config(args, parser):
         print 'Written fig file to {0}'.format(FIG_PATH)
 
 
-def up(args, parser):
+def up(args, parser, argv):
     update_config(args, parser)
-    fig_command('up', '-d', '--no-recreate')
+    cmd = ['up', '-d', '--no-recreate'] + argv
+    fig_command(*cmd)
+
+up.argv = True
 
 
 def bash(args, parser):

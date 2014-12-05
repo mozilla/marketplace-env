@@ -195,6 +195,11 @@ class TestCommands(TestCase):
         with mock.patch('mkt.cmds.set_config_value') as scv:
             assert not scv.called
 
+    def test_up_passed(self):
+        with mock.patch('mkt.cmds.fig_command') as fig_command:
+            cmds.up(None, None, ['--f'])
+            fig_command.assert_called_with('up', '-d', '--no-recreate', '--f')
+
     def test_update(self):
         args = self.parser.parse_args(['update'])
         os.mkdir(os.path.join(self.locations()['tree'], 'solitude'))
