@@ -1,12 +1,14 @@
+import sys
 from unittest import TestCase
 
-from mkt.cmds import create_parser
+from mkt import cmds
+from mkt.bin import main
 
 
 class TestArgs(TestCase):
 
     def setUp(self):
-        self.parser = create_parser()
+        self.parser = cmds.create_parser()
 
     def test_with_empty_args(self):
         """User passes no args, should fail with SystemExit"""
@@ -51,3 +53,15 @@ class TestArgs(TestCase):
             'bar'
         ])
         self.assertEqual(args.fork_remote_name, 'bar')
+
+
+class TestKnown(TestCase):
+
+    def test_up(self):
+        sys.argv = '- up foo bar bingo'.split(' ')
+        self.assertEquals(main()[0].func, cmds.up)
+
+    def test_check(self):
+        sys.argv = '- check foo bar bingo'.split(' ')
+        with self.assertRaises(SystemExit):
+            self.assertEquals(main()[0].func, cmds.up)
