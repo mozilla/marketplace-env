@@ -88,13 +88,13 @@ def checkout(args, parser, gh_username=None):
         if not os.path.isdir(branch_dir):
             subprocess.call([
                 'git', 'clone', '-o', args.moz_remote_name,
-                'git@github.com:mozilla/{0}.git'.format(branch),
+                'https://github.com/mozilla/{0}.git'.format(branch),
                 branch_dir
             ])
 
             subprocess.call([
                 'git', 'remote', 'add', args.fork_remote_name,
-                'git@github.com:{0}/{1}.git'.format(gh_username, branch)
+                'https://github.com/{0}/{1}.git'.format(gh_username, branch)
             ], cwd=branch_dir)
 
             subprocess.call([

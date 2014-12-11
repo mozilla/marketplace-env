@@ -111,12 +111,12 @@ class TestCommands(TestCase):
             self.assertEqual(subprocess.call.call_args_list, [
                 mock.call([
                     'git', 'clone', '-o', 'upstream',
-                    'git@github.com:mozilla/foo.git',
+                    'https://github.com/mozilla/foo.git',
                     '{0}/foo'.format(directory)
                 ]),
                 mock.call([
                     'git', 'remote', 'add', 'origin',
-                    'git@github.com:gh-user/foo.git'
+                    'https://github.com/gh-user/foo.git'
                 ], cwd='{0}/foo'.format(directory)),
                 mock.call([
                     'git', 'config',
@@ -141,12 +141,12 @@ class TestCommands(TestCase):
             self.assertEqual(subprocess.call.call_args_list, [
                 mock.call([
                     'git', 'clone', '-o', 'origin',
-                    'git@github.com:mozilla/foo.git',
+                    'https://github.com/mozilla/foo.git',
                     '{0}/foo'.format(directory)
                 ]),
                 mock.call([
                     'git', 'remote', 'add', 'upstream',
-                    'git@github.com:gh-user/foo.git'
+                    'https://github.com/gh-user/foo.git'
                 ], cwd='{0}/foo'.format(directory)),
                 mock.call([
                     'git', 'config',
