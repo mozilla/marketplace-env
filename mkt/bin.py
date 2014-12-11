@@ -4,7 +4,7 @@ import sys
 import cmds
 
 
-def main():
+def parse():
     parser = cmds.create_parser()
     argcomplete.autocomplete(parser)
     known_args = parser.parse_known_args()
@@ -22,13 +22,15 @@ def main():
     return args, parser, argv
 
 
-if __name__ == "__main__":
-    args, parser, argv = main()
+def main():
+    args, parser, argv = parse()
 
     # If the func accepts argv, then pass it in as well.
     if hasattr(args.func, 'argv'):
-        result = args.func(args, parser, argv)
+        return args.func(args, parser, argv)
     else:
-        result = args.func(args, parser)
+        return args.func(args, parser)
 
-    sys.exit(result)
+
+if __name__ == "__main__":
+    sys.exit(main())
