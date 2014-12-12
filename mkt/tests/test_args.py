@@ -2,7 +2,7 @@ import sys
 from unittest import TestCase
 
 from mkt import cmds
-from mkt.bin import main
+from mkt.bin import parse
 
 
 class TestArgs(TestCase):
@@ -59,9 +59,9 @@ class TestKnown(TestCase):
 
     def test_up(self):
         sys.argv = '- up foo bar bingo'.split(' ')
-        self.assertEquals(main()[0].func, cmds.up)
+        self.assertEquals(parse()[0].func, cmds.up)
 
     def test_check(self):
         sys.argv = '- check foo bar bingo'.split(' ')
         with self.assertRaises(SystemExit):
-            self.assertEquals(main()[0].func, cmds.up)
+            self.assertEquals(parse()[0].func, cmds.up)
