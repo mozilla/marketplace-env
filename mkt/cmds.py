@@ -3,12 +3,14 @@ import ConfigParser as configparser
 import functools
 import os
 import re
+import sha
 import shutil
 import socket
 import subprocess
 import sys
 import tempfile
 import textwrap
+from collections import namedtuple
 from contextlib import contextmanager
 from decimal import Decimal
 from pprint import pprint
@@ -32,6 +34,21 @@ BRANCHES = [
     'zamboni',
     'zippy',
 ]
+
+
+# Mapping of the branch to [file in container, file locally].
+req = namedtuple('Requirement', ['container', 'local'])
+pip = req('/pip/requirements/prod.txt', 'requirements/prod.txt')
+js = lambda x, y: req('/srv/{0}/{1}.json'.format(x, y), '{0}.json'.format(y))
+
+REQUIREMENTS = {
+    'zamboni': [pip],
+    'solitude': [pip],
+    'webpay': [pip],
+    'fireplace': [js('fireplace', 'bower'), js('fireplace', 'package')],
+    'spartacus': [js('spartacus', 'package')],
+    'zippy': [js('zippy', 'package')],
+}
 
 MIGRATIONS = ['zamboni', 'solitude']
 
@@ -276,6 +293,18 @@ def check(args, parser):
         if get_version('fig')[0] < Decimal('1.0'):
             print 'Update fig, version 1.0 or higher recommended.'
 
+    if args.requirements:
+        for branch in BRANCHES:
+            files = REQUIREMENTS.get(branch)
+            if not files:
+                continue
+
+            container = get_container_requirements(branch, files)
+            local = get_local_requirements(branch, files)
+            if local != container:
+                print ('Requirements on container differ from local, '
+                       'rebuild recommended for: {0}'.format(branch))
+
 
 def update(args, parser):
     git, migration = args.git, args.migrations
@@ -370,6 +399,30 @@ def bind(args, parser):
 
 # Helper functions:
 
+def get_container_requirements(branch, files):
+    project = get_project(branch)
+    files_str = ' '.join([f.container for f in files])
+    cmd = ('docker exec -t -i {0} /bin/bash -c "cat {1} | sha1sum"'
+            .format(get_fig_container(project).id, files_str))
+    try:
+        container = subprocess.check_output(cmd, shell=True)
+    except subprocess.CalledProcessError:
+        print 'Failed to check: {0}'.format(branch)
+        raise
+    # If we could supress the ' -' on the output of sha1sum, we
+    # could remove this.
+    return container.split(' ')[0]
+
+
+def get_local_requirements(branch, files):
+    branch_dir = join(locations()['tree'], branch)
+    local = sha.new()
+    for name in files:
+        with open(os.path.join(branch_dir, name.local)) as handle:
+            local.update(handle.read())
+    return local.hexdigest()
+
+
 def get_project(project):
     cur = os.getcwd()
 
@@ -394,7 +447,8 @@ def get_fig_container(project):
     proj = cmd.get_project(FIG_PATH)
     containers = proj.containers(service_names=[project])
     if not containers:
-        raise ValueError('No containers found for: {0}'.format(project))
+        raise ValueError('No containers found for: {0}. '
+                         'Run: mkt up' .format(project))
     return containers[0]
 
 
@@ -578,6 +632,11 @@ def create_parser():
     )
     parser_check.add_argument(
         '--services', help='Checks the status page of each service.',
+        action='store_true'
+    )
+    parser_check.add_argument(
+        '--requirements', help='Checks the container requirements vs current'
+                               ' requirements',
         action='store_true'
     )
     parser_check.add_argument(
