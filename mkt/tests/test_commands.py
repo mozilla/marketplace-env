@@ -1,4 +1,5 @@
 import os
+import sha
 import tempfile
 from decimal import Decimal
 from unittest import TestCase
@@ -8,7 +9,17 @@ import mock
 from mkt import cmds
 
 
-class TestConfig(TestCase):
+class TestBase(TestCase):
+
+    def setUp(self):
+        test_file = tempfile.mkstemp()[1]
+        cmds.BRANCHES = ['solitude']
+        cmds.MIGRATIONS = ['solitude']
+        cmds.REQUIREMENTS = {'solitude': [['f', test_file]]}
+        open(test_file, 'w').write('this is a test')
+
+
+class TestConfig(TestBase):
 
     def setUp(self):
         self.tmp = tempfile.mkstemp()[1]
@@ -22,7 +33,7 @@ class TestConfig(TestCase):
             assert cmds.get_config_value('nope', 'k') == 'p'
 
 
-class TestProjectAndContainer(TestCase):
+class TestProjectAndContainer(TestBase):
 
     def test_no_dockerfile(self):
         with mock.patch('os.listdir') as listdir:
@@ -44,7 +55,7 @@ class TestProjectAndContainer(TestCase):
                 assert cmds.get_project(None) == 'solitude'
 
 
-class TestVersions(TestCase):
+class TestVersions(TestBase):
 
     def test_get_fails(self):
         with mock.patch('subprocess.check_output') as sub:
@@ -67,9 +78,26 @@ class TestVersions(TestCase):
             )
 
 
-class TestCommands(TestCase):
+class TestRequirements(TestBase):
+
+    def test_get_container(self):
+        with mock.patch('mkt.cmds.subprocess') as sub:
+            sub.check_output.return_value = 'x -'
+            with mock.patch('mkt.cmds.get_fig_container') as fig:
+                result = cmds.get_container_requirements(
+                    'solitude', cmds.REQUIREMENTS['solitude'])
+        self.assertEquals(result, 'x')
+
+    def test_get_local(self):
+        result = cmds.get_local_requirements(
+                    'solitude', cmds.REQUIREMENTS['solitude'])
+        self.assertEquals(result, sha.new('this is a test').hexdigest())
+
+
+class TestCommands(TestBase):
 
     def setUp(self):
+        super(TestCommands, self).setUp()
         self.parser = cmds.create_parser()
         self.args = mock.Mock()
 
@@ -83,8 +111,6 @@ class TestCommands(TestCase):
         cmds.locations = self.locations
         cmds.CONFIG_PATH = tempfile.mkstemp()[1]
         cmds.FIG_PATH = tempfile.mkstemp()[1]
-        cmds.BRANCHES = ['solitude']
-        cmds.MIGRATIONS = ['solitude']
 
     def test_get_image(self):
         self.args.name = 'whatever'
