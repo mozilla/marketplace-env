@@ -15,7 +15,7 @@ class TestBase(TestCase):
         test_file = tempfile.mkstemp()[1]
         cmds.BRANCHES = ['solitude']
         cmds.MIGRATIONS = ['solitude']
-        cmds.REQUIREMENTS = {'solitude': [['f', test_file]]}
+        cmds.REQUIREMENTS = {'solitude': [cmds.req('f', test_file)]}
         open(test_file, 'w').write('this is a test')
 
 
