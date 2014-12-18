@@ -72,6 +72,22 @@ solitude:
   hostname: solitude
   links:
     - mysql:mysql
+    - solitudeproxy:solitudeproxy
+  volumes:
+    - {tree}/solitude/:/srv/solitude
+  working_dir: /srv/solitude
+
+solitudeproxy:
+  build: {tree}/solitude
+  command: /bin/bash /srv/solitude/bin/docker_proxy.sh
+  environment:
+    - PYTHONUNBUFFERED=1
+    - PYTHONDONTWRITEBYTECODE=1
+    - TERM=xterm-256color
+    - ZIPPY_BASE_URL=http://zippy:2605/zippy
+    - SOLITUDE_PROXY=enabled
+  hostname: solitude
+  links:
     - zippy:zippy
   volumes:
     - {tree}/solitude/:/srv/solitude
