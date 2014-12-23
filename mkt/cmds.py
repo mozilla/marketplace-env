@@ -509,20 +509,6 @@ def get_adb_devices():
     return devices
 
 
-def get_image(args, parser):
-    image_name = args.name
-    image_dir = join(locations()['image'], image_name)
-
-    if not os.path.isdir(image_dir) or not os.path.exists(image_dir):
-        parser.error('image_dir: {0} does not exist. '
-                     'Exiting'.format(image_dir))
-
-    return {
-        'name': image_name,
-        'dir': image_dir,
-    }
-
-
 def select(choices, default=1, prompt='Please choose from the following [1]:'):
     """Create a prompt similar to select in bash."""
 
