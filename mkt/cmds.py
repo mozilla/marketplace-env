@@ -19,6 +19,7 @@ import netifaces
 import requests
 
 from fig.cli import main
+from fig.cli.docker_client import docker_client
 from version import __version__
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -58,6 +59,7 @@ SERVICE_CHECKS = {
     'zamboni': 'http://mp.dev/services/monitor.json'
 }
 
+HUB_ACCOUNT = 'mozillamarketplace'
 
 # Command functions:
 
@@ -78,16 +80,8 @@ def check_git_config(args, parser):
 
 def revs(args, parser):
     for branch in BRANCHES:
-        branch_dir = join(locations()['tree'], branch)
-        with pushd(branch_dir):
-            os.chdir(branch_dir)
-            active_branch = subprocess.check_output([
-                'git', 'rev-parse', '--abbrev-ref', 'HEAD'])
-            rev = subprocess.check_output([
-                'git', 'log', '-n', '1',
-                '--pretty=oneline', '--abbrev-commit'])
-            print "{0}: {1} [{2}]".format(branch, rev.split()[0],
-                                          active_branch.rstrip())
+        active_branch, rev = get_git_rev(branch)
+        print "{0}: {1} [{2}]".format(branch, rev, active_branch)
 
 
 def checkout(args, parser, gh_username=None):
@@ -306,6 +300,21 @@ def check(args, parser):
                        'rebuild recommended for: {0}'.format(branch))
 
 
+def push(args, parser):
+    project = get_project(args.project)
+    rev = get_image_rev(project)
+
+    branch_dir = join(locations()['tree'], project)
+    with pushd(branch_dir):
+        container = get_fig_container(project)
+        image_id = get_image_id(container)
+        cmd = ('docker tag {0} {1}/{2}:{3}'
+               .format(image_id, HUB_ACCOUNT, project, rev))
+        os.system(cmd)
+        cmd = 'docker push {0}/{1}:{2}'.format(HUB_ACCOUNT, project, rev)
+        os.system(cmd)
+
+
 def update(args, parser):
     git, migration = args.git, args.migrations
     if not git and not migration:
@@ -440,6 +449,31 @@ def get_project(project):
         raise ValueError('Project {0} not in BRANCHES'.format(project))
 
     return project
+
+def get_git_rev(branch):
+    branch_dir = join(locations()['tree'], branch)
+    with pushd(branch_dir):
+        active_branch = subprocess.check_output([
+            'git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+        rev = subprocess.check_output([
+            'git', 'log', '-n', '1',
+            '--pretty=oneline', '--abbrev-commit'])
+        return active_branch.rstrip(), rev.split()[0]
+
+
+def get_image_rev(branch):
+    files = REQUIREMENTS.get(branch)[:]
+    files.append(req('', 'Dockerfile'))
+    return get_local_requirements(branch, files)[:8]
+
+
+def get_image_id(container):
+    for image in docker_client().images():
+        for tag in image['RepoTags']:
+            if tag == container.image:
+                return image['Id']
+
+    raise ValueError('No image found for: {0}'.format(container.image))
 
 
 def get_fig_container(project):
@@ -630,6 +664,15 @@ def create_parser():
         action='store_true'
     )
     parser_check.set_defaults(func=check)
+
+    parser_push = subparsers.add_parser(
+        'push', help='Tag and push instances of containers to Docker Hub.'
+    )
+    parser_push.add_argument(
+        '--project',
+        help='Project name, if not given will be calculated.',
+        action='store')
+    parser_push.set_defaults(func=push)
 
     parser_up = subparsers.add_parser(
         'up', help='Recreates fig.yml and starts the '
