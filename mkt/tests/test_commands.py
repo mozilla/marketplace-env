@@ -146,7 +146,7 @@ class TestCommands(TestBase):
                 ], cwd='{0}/foo'.format(directory)),
                 mock.call([
                     'git', 'config',
-                    'branch.master.remote', 'origin'
+                    'branch.master.remote', 'upstream'
                 ])
             ])
 
@@ -176,7 +176,7 @@ class TestCommands(TestBase):
                 ], cwd='{0}/foo'.format(directory)),
                 mock.call([
                     'git', 'config',
-                    'branch.master.remote', 'upstream'
+                    'branch.master.remote', 'origin'
                 ])
             ])
 
