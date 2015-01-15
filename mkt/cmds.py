@@ -115,7 +115,7 @@ def checkout(args, parser, gh_username=None):
             ], cwd=branch_dir)
 
             subprocess.call([
-                'git', 'config', 'branch.master.remote', args.fork_remote_name
+                'git', 'config', 'branch.master.remote', args.moz_remote_name
             ])
 
 
