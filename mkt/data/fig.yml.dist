@@ -62,7 +62,7 @@ redis:
     - TERM=xterm-256color
 
 solitude:
-  build: {tree}/solitude
+  image: firefoxmarketplace/solitude
   command: /bin/bash /srv/solitude/bin/docker_run.sh
   environment:
     - PYTHONUNBUFFERED=1
