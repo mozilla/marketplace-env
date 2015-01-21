@@ -104,7 +104,7 @@ webpay:
 
 zamboni:
   build: {tree}/zamboni
-  command: /bin/bash /srv/zamboni/bin/docker_run.sh
+  command: supervisord -n -c /srv/zamboni/scripts/docker/supervisor.conf
   environment:
     - FXA_CLIENT_ID=7943afb7b9f54089
     - PYTHONUNBUFFERED=1
