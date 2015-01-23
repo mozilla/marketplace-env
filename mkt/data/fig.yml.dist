@@ -12,7 +12,7 @@ elasticsearch:
     - "9300:9300"
 
 fireplace:
-  build: {tree}/fireplace
+  image: mozillamarketplace/fireplace
   command: /bin/bash /srv/fireplace/src/bin/docker_run.sh
   environment:
     - TERM=xterm-256color
@@ -62,7 +62,7 @@ redis:
     - TERM=xterm-256color
 
 solitude:
-  build: {tree}/solitude
+  image: mozillamarketplace/solitude
   command: supervisord -n -c /srv/solitude/bin/docker/supervisor.conf
   environment:
     - PYTHONUNBUFFERED=1
@@ -78,7 +78,7 @@ solitude:
   working_dir: /srv/solitude
 
 spartacus:
-  build: {tree}/spartacus
+  image: mozillamarketplace/spartacus
   command: "grunt docker"
   environment:
     - TERM=xterm-256color
@@ -87,7 +87,7 @@ spartacus:
   working_dir: /srv/spartacus/src
 
 webpay:
-  build: {tree}/webpay
+  image: mozillamarketplace/webpay
   command: supervisord -n -c /srv/webpay/bin/docker/supervisor.conf
   environment:
     - MKT_HOSTNAME=mp.dev
@@ -103,7 +103,7 @@ webpay:
   working_dir: /srv/webpay
 
 zamboni:
-  build: {tree}/zamboni
+  image: mozillamarketplace/zamboni
   command: supervisord -n -c /srv/zamboni/scripts/docker/supervisor.conf
   environment:
     - FXA_CLIENT_ID=7943afb7b9f54089
@@ -121,7 +121,7 @@ zamboni:
   working_dir: /srv/zamboni
 
 zippy:
-  build: {tree}/zippy
+  image: mozillamarketplace/zippy
   command: "grunt start --port 2605 --noauth"
   environment:
     - TERM=xterm-256color
