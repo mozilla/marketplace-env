@@ -4,7 +4,7 @@
 #
 # You should alter the file mkt-data/fig.yml.dist.
 elasticsearch:
-  build: {image}/elasticsearch
+  image: mozillamarketplace/elasticsearch
   environment:
     - TERM=xterm-256color
   ports:
@@ -23,7 +23,7 @@ fireplace:
   working_dir: /srv/fireplace/src
 
 nginx:
-  build: {image}/nginx
+  image: mozillamarketplace/nginx
   command: nginx -c /etc/nginx/nginx.conf -g "daemon off;"
   environment:
     - TERM=xterm-256color
@@ -41,23 +41,26 @@ nginx:
     - {tree}/zamboni/:/srv/zamboni
 
 memcached:
-  build: {image}/memcached
+  image: mozillamarketplace/memcached
   command: memcached -u nobody
   environment:
     - TERM=xterm-256color
 
 mysqldata:
+  # Note for legacy reasons, this is left as a build step. Otherwise people
+  # who upgrade to an image will lose their data as they will get a container.
+  # Fortunately its a fast build.
   build: {image}/mysql-data
 
 mysql:
-  build: {image}/mysql-service
+  image: mozillamarketplace/mysql-service
   environment:
     - TERM=xterm-256color
   volumes_from:
     - mysqldata
 
 redis:
-  build: {image}/redis
+  image: mozillamarketplace/redis
   environment:
     - TERM=xterm-256color
 

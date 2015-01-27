@@ -214,7 +214,7 @@ class TestCommands(TestBase):
         # Just a rough assertion that the build variable got changed.
         assert '{0}/webpay'.format(directory) in data
         # ANother rough check that volumes got set correctly.
-        assert '/dir/images/elasticsearch'.format(directory) in data
+        assert '/dir/images/mysql-data'.format(directory) in data
 
     def test_root_no_args(self):
         args = self.parser.parse_args(['root'])
