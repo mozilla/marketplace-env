@@ -35,6 +35,14 @@ BRANCHES = [
     'zippy',
 ]
 
+IMAGES = [
+    'elasticsearch',
+    'memcached',
+    'mysql-data',
+    'mysql-service',
+    'nginx',
+    'redis'
+]
 
 # Mapping of the branch to [file in container, file locally].
 req = namedtuple('Requirement', ['container', 'local'])
@@ -436,8 +444,9 @@ def get_project(project):
         return walk(new)
 
     project = project or walk(cur)
-    if project not in BRANCHES:
-        raise ValueError('Project {0} not in BRANCHES'.format(project))
+    if project not in BRANCHES and project not in IMAGES:
+        raise ValueError('Project {0} not in BRANCHES or IMAGES'
+                         .format(project))
 
     return project
 
