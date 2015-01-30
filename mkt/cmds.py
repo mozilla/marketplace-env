@@ -38,7 +38,6 @@ BRANCHES = [
 IMAGES = [
     'elasticsearch',
     'memcached',
-    'mysql-data',
     'mysql-service',
     'nginx',
     'redis'

@@ -46,15 +46,10 @@ memcached:
   environment:
     - TERM=xterm-256color
 
-mysqldata:
-  build: {image}/mysql-data
-
 mysql:
   build: {image}/mysql-service
   environment:
     - TERM=xterm-256color
-  volumes_from:
-    - mysqldata
 
 redis:
   build: {image}/redis
