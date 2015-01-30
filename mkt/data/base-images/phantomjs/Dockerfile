@@ -7,7 +7,7 @@ RUN yum install -y fontconfig \
     libstdc++.so.6 \
     wget \
     tar \
-    bzip2
+    bzip2; yum -y clean all
 
 ENV PHANTOMJS_VERSION 1.9.7
 
