@@ -8,6 +8,13 @@ the backend, using Docker containers.
 
 ## Changes
 
+### 0.1.8
+
+- Allow `mkt bash` into images as well as projects, eg: nginx
+- run zamboni, webpay and solitude through supervisord (bug 1122190)
+- run receipt verifier for zamboni (bug 1109334)
+- default master to moz in the checkout
+
 ### 0.1.3-5
 
 - Various fixes to packaging just because.
