@@ -1,6 +1,7 @@
 FROM mozillamarketplace/centos-mysql-mkt:0.2
 
-ADD my.cnf /etc/mysql/conf.d/my.cnf
+RUN mv /etc/my.cnf{,.bck}
+ADD my.cnf /etc/my.cnf
 ADD setup.sh /setup.sh
 ADD run.sh /run.sh
 
