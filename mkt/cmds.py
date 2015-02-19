@@ -35,7 +35,19 @@ BRANCHES = [
     'zippy',
 ]
 
-IMAGES = [
+# Local projects are run directly
+# from the tree because they only
+# build files.
+LOCAL = [
+    'fireplace',
+    'spartacus',
+]
+
+# IMAGES that need to be built.
+IMAGES = list(set(BRANCHES).difference(LOCAL))
+
+# Other images with dependency services.
+DEP_IMAGES = [
     'elasticsearch',
     'memcached',
     'mysql-data',
@@ -302,7 +314,7 @@ def check(args, parser):
             print 'Update fig, version 1.0 or higher recommended.'
 
     if args.requirements:
-        for branch in BRANCHES:
+        for branch in IMAGES:
             files = REQUIREMENTS.get(branch)
             if not files:
                 continue
@@ -411,7 +423,7 @@ def get_container_requirements(branch, files):
     project = get_project(branch)
     files_str = ' '.join([f.container for f in files])
     cmd = ('docker exec -t -i {0} /bin/bash -c "cat {1} | sha1sum"'
-            .format(get_fig_container(project).id, files_str))
+           .format(get_fig_container(project).id, files_str))
     try:
         container = subprocess.check_output(cmd, shell=True)
     except subprocess.CalledProcessError:
@@ -444,8 +456,8 @@ def get_project(project):
         return walk(new)
 
     project = project or walk(cur)
-    if project not in BRANCHES and project not in IMAGES:
-        raise ValueError('Project {0} not in BRANCHES or IMAGES'
+    if project not in IMAGES and project not in DEP_IMAGES:
+        raise ValueError('Project {0} not in IMAGES or DEP_IMAGES'
                          .format(project))
 
     return project

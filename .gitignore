@@ -63,3 +63,7 @@ fig.yml
 # Ignore vagrant files from testing.
 .vagrant
 Vagrantfile
+
+
+logs/*.log
+supervisord.pid

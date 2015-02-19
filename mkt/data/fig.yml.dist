@@ -11,17 +11,6 @@ elasticsearch:
     - "9200:9200"
     - "9300:9300"
 
-fireplace:
-  build: {tree}/fireplace
-  command: /bin/bash /srv/fireplace/src/bin/docker_run.sh
-  environment:
-    - TERM=xterm-256color
-    - BOWER_PATH=/srv/fireplace/bower_components/
-    - GULP_CONFIG_PATH=/srv/fireplace/src/config
-  volumes:
-    - {tree}/fireplace/:/srv/fireplace/src
-  working_dir: /srv/fireplace/src
-
 nginx:
   build: {image}/nginx
   command: nginx -c /etc/nginx/nginx.conf -g "daemon off;"
@@ -29,7 +18,6 @@ nginx:
     - TERM=xterm-256color
   links:
     - webpay:webpay
-    - spartacus:spartacus
     - solitude:solitude
     - zamboni:zamboni
     - zippy:zippy
@@ -76,15 +64,6 @@ solitude:
   volumes:
     - {tree}/solitude/:/srv/solitude
   working_dir: /srv/solitude
-
-spartacus:
-  build: {tree}/spartacus
-  command: "grunt docker"
-  environment:
-    - TERM=xterm-256color
-  volumes:
-    - {tree}/spartacus/:/srv/spartacus/src
-  working_dir: /srv/spartacus/src
 
 webpay:
   build: {tree}/webpay
