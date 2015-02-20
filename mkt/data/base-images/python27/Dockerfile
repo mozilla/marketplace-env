@@ -12,8 +12,9 @@ RUN yum install -y \
     python27-python-lxml
 RUN yum install -y libxslt
 
-env PATH /opt/rh/python27/root/usr/bin:$PATH
-env LD_LIBRARY_PATH /opt/rh/python27/root/usr/lib64
+ENV PATH /opt/rh/python27/root/usr/bin:$PATH
+ENV LD_LIBRARY_PATH /opt/rh/python27/root/usr/lib64
+ENV LANG=en_US.UTF-8
 
 RUN easy_install pip
 RUN pip install ipython ipdb
