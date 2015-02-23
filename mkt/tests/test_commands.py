@@ -13,7 +13,6 @@ class TestBase(TestCase):
 
     def setUp(self):
         test_file = tempfile.mkstemp()[1]
-        cmds.BRANCHES = ['solitude']
         cmds.MIGRATIONS = ['solitude']
         cmds.REQUIREMENTS = {'solitude': [cmds.req('f', test_file)]}
         open(test_file, 'w').write('this is a test')
@@ -208,18 +207,27 @@ class TestCommands(TestBase):
 
     def test_root(self):
         directory = self.locations()['tree']
-        args = self.parser.parse_args(['root', directory])
+        args = self.parser.parse_args(['root', directory, '--buildfrom=local'])
         cmds.root(args, self.parser)
         data = open(self.locations()['fig'], 'r').read()
         # Just a rough assertion that the build variable got changed.
         assert '{0}/webpay'.format(directory) in data
-        # ANother rough check that volumes got set correctly.
+        # Another rough check that volumes got set correctly.
         assert '/dir/images/elasticsearch'.format(directory) in data
 
     def test_root_no_args(self):
         args = self.parser.parse_args(['root'])
         with mock.patch('mkt.cmds.set_config_value') as scv:
+            cmds.root(args, self.parser)
             assert not scv.called
+
+    def test_root_hub(self):
+        directory = self.locations()['tree']
+        args = self.parser.parse_args(['root', directory, '--buildfrom=hub'])
+        cmds.root(args, self.parser)
+        data = open(self.locations()['fig'], 'r').read()
+        # A rough assertion that the build variable changed.
+        assert 'image: mozillamarketplace/elasticsearch' in data
 
     def test_up_passed(self):
         with mock.patch('mkt.cmds.fig_command') as fig_command:
@@ -228,7 +236,8 @@ class TestCommands(TestBase):
 
     def test_update(self):
         args = self.parser.parse_args(['update'])
-        os.mkdir(os.path.join(self.locations()['tree'], 'solitude'))
+        for branch in cmds.BRANCHES:
+            os.mkdir(os.path.join(self.locations()['tree'], branch))
 
         with mock.patch('mkt.cmds.subprocess') as subprocess:
             with mock.patch('mkt.cmds.fig_command') as fig:
@@ -240,7 +249,9 @@ class TestCommands(TestBase):
 
     def test_update_git_only(self):
         args = self.parser.parse_args(['update', '--git'])
-        os.mkdir(os.path.join(self.locations()['tree'], 'solitude'))
+        for branch in cmds.BRANCHES:
+            os.mkdir(os.path.join(self.locations()['tree'], branch))
+
         with mock.patch('mkt.cmds.subprocess') as subprocess:
             with mock.patch('mkt.cmds.fig_command') as fig:
                 cmds.update(args, self.parser)

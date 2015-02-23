@@ -66,7 +66,6 @@ SERVICE_CHECKS = {
     'zamboni': 'http://mp.dev/services/monitor.json'
 }
 
-
 # Command functions:
 
 def check_git_config(args, parser):
@@ -161,22 +160,48 @@ def locations():
 
 
 def root(args, parser):
-    if not args.directory:
+    if not args.directory and not args.build:
         value = get_config_value('paths', 'root')
         if value:
             print value
         return
 
-    directory = os.path.abspath(os.path.expandvars(args.directory))
-    if not os.path.exists(directory):
-        raise ValueError('Directory {0} does not exist.'.format(directory))
+    if args.directory:
+        directory = os.path.abspath(os.path.expandvars(args.directory))
+        if not os.path.exists(directory):
+            raise ValueError('Directory {0} does not exist.'.format(directory))
 
-    set_config_value('paths', 'root', directory)
+        set_config_value('paths', 'root', directory)
+
+    if args.build:
+        set_config_value('source', 'build', args.build)
+
     update_config(args, parser)
 
 
 def update_config(args, parser):
     context = locations()
+
+    build_type = get_config_value('source', 'build', 'local')
+    for name in BRANCHES + IMAGES:
+        # If its build locally, write out a local build command.
+        if build_type == 'local':
+            value = 'build: {image}/{name}'
+            # The build command is different if its a branch because the
+            # path is different.
+            if name in BRANCHES:
+                value = 'build: {tree}/{name}'
+            value = value.format(name=name, **context)
+        # Just pull from docker hub.
+        elif build_type == 'hub':
+            value = 'image: mozillamarketplace/{name}'.format(name=name)
+        # Wat?
+        else:
+            raise ValueError('Unknown build type: {0}. '
+                             'Valid values: hub or local'.format(build_type))
+
+        context['build-{0}'.format(name)] = value
+
     src_file = context['fig.dist']
     with open(src_file, 'r') as src:
         src_data = src.read()
@@ -475,7 +500,7 @@ def get_config_value(section, key, default=None):
     config.read(CONFIG_PATH)
     try:
         return config.get(section, key)
-    except configparser.NoSectionError:
+    except (configparser.NoSectionError, configparser.NoOptionError):
         pass
     return default
 
@@ -616,6 +641,13 @@ def create_parser():
         'directory', help='Path to the marketplace repositories.',
         default=None, nargs='?'
     )
+    parser_root.add_argument(
+        '--buildfrom', help='Build locally or from docker hub',
+        dest='build', action='store'
+    )
+    # Set the default to empty to allow "mkt root" to just print out the
+    # root directory.
+    parser_root.set_defaults(build=None)
     parser_root.set_defaults(func=root)
 
     parser_bash = subparsers.add_parser(
