@@ -41,7 +41,7 @@ nginx:
     - {tree}/zamboni/:/srv/zamboni
 
 memcached:
-  {build-nginx}
+  {build-memcached}
   command: memcached -u nobody
   environment:
     - TERM=xterm-256color
