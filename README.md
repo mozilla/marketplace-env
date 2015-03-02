@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/mozilla/marketplace-env.svg?branch=master)](https://travis-ci.org/mozilla/marketplace-env)
+[![PyPI version](https://badge.fury.io/py/marketplace-env.svg)](http://badge.fury.io/py/marketplace-env)
 
 Automates the setup of a Marketplace development environment, prominently for
 the backend, using Docker containers.
