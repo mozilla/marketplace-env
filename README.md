@@ -7,32 +7,9 @@ the backend, using Docker containers.
 * [Docker instructions](https://marketplace.readthedocs.org/en/latest/topics/backend.html)
 * [Marketplace documentation](https://marketplace.readthedocs.org)
 
-## Changes
+## Changelog 
 
-### 0.1.8
-
-- Allow `mkt bash` into images as well as projects, eg: nginx
-- run zamboni, webpay and solitude through supervisord (bug 1122190)
-- run receipt verifier for zamboni (bug 1109334)
-- default master to moz in the checkout
-
-### 0.1.3-5
-
-- Various fixes to packaging just because.
-
-### 0.1.2
-
-- fix images and base images paths in setup
-
-### 0.1.1
-
-- fix fig.yml.dist paths in setup by moving to mkt-data
-
-### 0.1
-
-- Move to a library installable by pip.
-- Add in generating fig.yml through a template.
-- Add in commands root and up.
+See https://github.com/mozilla/marketplace-env/releases
 
 ### Upgrading to 0.1
 
