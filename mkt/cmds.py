@@ -654,9 +654,9 @@ def create_parser():
         'bash', help='Run a bash shell on a running container.'
     )
     parser_bash.add_argument(
-        '--project',
+        'project',
         help='Project name, if not given will be calculated.',
-        action='store')
+        default=None, nargs='?')
     parser_bash.set_defaults(func=bash)
 
     parser_update = subparsers.add_parser(
