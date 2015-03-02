@@ -1,5 +1,5 @@
-FROM mozillamarketplace/centos-python27-mkt:0.5
+FROM centos:centos6
 
-RUN yum install -y npm
+RUN yum install -y npm; yum -y clean all
 
-RUN npm install -g grunt-cli
+RUN npm install -g grunt-cli; yum -y clean all
