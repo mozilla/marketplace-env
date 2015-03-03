@@ -31,17 +31,21 @@ def get_package_data(package):
 class Custom(install):
 
     def run(self):
+        """
+        Override the run command, so that post setup we can run our
+        own commands, to keep the fig yml up to date with any changes
+        from the library.
+        """
         install.run(self)
 
-        # post install, rewrite config file
         from mkt.cmds import get_config_value, update_config # flake8: noqa
 
-        # If there is config value, then its never been run. Don't guess
-        # just abort instead.
+        # If there is not a config value, then it's never been run. Don't
+        # guess, we'll just abort instead.
         if not get_config_value('paths', 'root', None):
             return
 
-        # There is a value, rewrite the config so its got the latest goodness
+        # There is a value, rewrite the config so it's got the latest goodness
         # in it.
         update_config(None, None)
 
