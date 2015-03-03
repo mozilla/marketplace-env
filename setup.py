@@ -1,6 +1,7 @@
 import os
 import re
 from setuptools import setup
+from setuptools.command.install import install
 
 
 def get_version(package):
@@ -27,12 +28,33 @@ def get_package_data(package):
     return {package: filepaths}
 
 
+class Custom(install):
+
+    def run(self):
+        install.run(self)
+
+        # post install, rewrite config file
+        from mkt.cmds import get_config_value, update_config # flake8: noqa
+
+        # If there is config value, then its never been run. Don't guess
+        # just abort instead.
+        if not get_config_value('paths', 'root', None):
+            return
+
+        # There is a value, rewrite the config so its got the latest goodness
+        # in it.
+        update_config(None, None)
+
+
 setup(
     name='marketplace-env',
     version=get_version('mkt'),
     description='Tools for building the Firefox Marketplace using Docker.',
     author='Marketplace Developers',
     author_email='marketplace-devs@mozilla.com',
+    cmdclass={
+        'install': Custom
+    },
     license='MPL2.0',
     classifiers=[
         'Intended Audience :: Developers',
