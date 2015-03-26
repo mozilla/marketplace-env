@@ -33,7 +33,12 @@ BRANCHES = [
     'webpay',
     'zamboni',
     'zippy',
+    'signing-service'
 ]
+
+FIG_ALIASES = {
+    'signing-service': 'signing'
+}
 
 IMAGES = [
     'elasticsearch',
@@ -479,6 +484,7 @@ def get_project(project):
 def get_fig_container(project):
     cmd = main.Command()
     proj = cmd.get_project(FIG_PATH)
+    project = FIG_ALIASES.get(project, project)
     containers = proj.containers(service_names=[project])
     if not containers:
         raise ValueError('No containers found for: {0}. '
