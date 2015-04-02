@@ -100,6 +100,7 @@ webpay:
   links:
     - zippy:zippy
     - solitude:solitude
+    - redis:redis
   volumes:
     - {tree}/webpay/:/srv/webpay
   working_dir: /srv/webpay
