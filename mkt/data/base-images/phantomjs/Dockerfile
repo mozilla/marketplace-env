@@ -1,4 +1,4 @@
-FROM mozillamarketplace/centos-nodejs-mkt:0.1
+FROM mozillamarketplace/centos-nodejs-mkt:latest
 
 RUN yum install -y fontconfig \
     freetype \

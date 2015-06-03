@@ -1,5 +1,5 @@
 
-FROM mozillamarketplace/centos-python27-mkt:0.5
+FROM mozillamarketplace/centos-python27-mkt:latest
 
 RUN yum install -y java-1.7.0-openjdk tar which
 

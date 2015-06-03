@@ -7,7 +7,7 @@ RUN yum install -y python27-m2crypto python27-python-lxml libxslt && yum clean a
 
 ENV PATH /opt/rh/python27/root/usr/bin:$PATH
 ENV LD_LIBRARY_PATH /opt/rh/python27/root/usr/lib64
-ENV LANG=en_US.UTF-8
+ENV LANG en_US.UTF-8
 
 RUN easy_install pip
 RUN pip install ipython ipdb
