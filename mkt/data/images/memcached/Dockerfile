@@ -1,4 +1,4 @@
-FROM mozillamarketplace/centos-python27-mkt:0.5
+FROM mozillamarketplace/centos-python27-mkt:latest
 
 RUN yum install -y memcached
 

@@ -1,4 +1,4 @@
-FROM mozillamarketplace/centos-mysql-mkt:0.2
+FROM mozillamarketplace/centos-mysql-mkt:latest
 
 RUN mv /etc/my.cnf{,.bck}
 ADD my.cnf /etc/my.cnf
