@@ -30,14 +30,14 @@ you should be able to update and run the following commands:
 And then add the two environment variables:
 
 ```shell
-  export FIG_FILE=~/.mkt.fig.yml
-  export FIG_PROJECT_NAME=mkt
+  export COMPOSE_FILE=~/.mkt.fig.yml
+  export COMPOSE_PROJECT_NAME=mkt
 ```
 
 You'll then need to run:
 
 ```shell
-  fig build
+  docker-compose build
 ```
 
 After that you should be good to go.

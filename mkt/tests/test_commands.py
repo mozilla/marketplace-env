@@ -82,14 +82,14 @@ class TestRequirements(TestBase):
     def test_get_container(self):
         with mock.patch('mkt.cmds.subprocess') as sub:
             sub.check_output.return_value = 'x -'
-            with mock.patch('mkt.cmds.get_fig_container') as fig:
+            with mock.patch('mkt.cmds.get_compose_container') as compose:
                 result = cmds.get_container_requirements(
                     'solitude', cmds.REQUIREMENTS['solitude'])
         self.assertEquals(result, 'x')
 
     def test_get_local(self):
         result = cmds.get_local_requirements(
-                    'solitude', cmds.REQUIREMENTS['solitude'])
+            'solitude', cmds.REQUIREMENTS['solitude'])
         self.assertEquals(result, sha.new('this is a test').hexdigest())
 
 
@@ -104,12 +104,13 @@ class TestCommands(TestBase):
         self.locations.return_value = {
             'tree': tempfile.mkdtemp(),
             'image': '/dir/images',
-            'fig.dist': os.path.join(cmds.ROOT, 'data', 'fig.yml.dist'),
-            'fig': tempfile.mkstemp()[1]
+            'docker-compose.dist': os.path.join(cmds.ROOT, 'data',
+                                                'docker-compose.yml.dist'),
+            'docker-compose': tempfile.mkstemp()[1]
         }
         cmds.locations = self.locations
         cmds.CONFIG_PATH = tempfile.mkstemp()[1]
-        cmds.FIG_PATH = tempfile.mkstemp()[1]
+        cmds.COMPOSE_PATH = tempfile.mkstemp()[1]
 
     def test_get_image(self):
         self.args.name = 'whatever'
@@ -209,7 +210,7 @@ class TestCommands(TestBase):
         directory = self.locations()['tree']
         args = self.parser.parse_args(['root', directory, '--buildfrom=local'])
         cmds.root(args, self.parser)
-        data = open(self.locations()['fig'], 'r').read()
+        data = open(self.locations()['docker-compose'], 'r').read()
         # Just a rough assertion that the build variable got changed.
         assert '{0}/webpay'.format(directory) in data
         # Another rough check that volumes got set correctly.
@@ -225,14 +226,14 @@ class TestCommands(TestBase):
         directory = self.locations()['tree']
         args = self.parser.parse_args(['root', directory, '--buildfrom=hub'])
         cmds.root(args, self.parser)
-        data = open(self.locations()['fig'], 'r').read()
+        data = open(self.locations()['docker-compose'], 'r').read()
         # A rough assertion that the build variable changed.
         assert 'image: mozillamarketplace/elasticsearch' in data
 
     def test_up_passed(self):
-        with mock.patch('mkt.cmds.fig_command') as fig_command:
+        with mock.patch('mkt.cmds.compose_command') as compose_command:
             cmds.up(None, None, ['--f'])
-            fig_command.assert_called_with('up', '-d', '--no-recreate', '--f')
+            compose_command.assert_called_with('up', '--f')
 
     def test_update(self):
         args = self.parser.parse_args(['update'])
@@ -240,11 +241,11 @@ class TestCommands(TestBase):
             os.mkdir(os.path.join(self.locations()['tree'], branch))
 
         with mock.patch('mkt.cmds.subprocess') as subprocess:
-            with mock.patch('mkt.cmds.fig_command') as fig:
+            with mock.patch('mkt.cmds.compose_command') as compose:
                 cmds.update(args, self.parser)
                 subprocess.check_output.assert_called_with(
                     ['git', 'pull', '-q'])
-                fig.assert_called_with(
+                compose.assert_called_with(
                     'run', '--rm', 'solitude', 'schematic', 'migrations')
 
     def test_update_git_only(self):
@@ -253,10 +254,10 @@ class TestCommands(TestBase):
             os.mkdir(os.path.join(self.locations()['tree'], branch))
 
         with mock.patch('mkt.cmds.subprocess') as subprocess:
-            with mock.patch('mkt.cmds.fig_command') as fig:
+            with mock.patch('mkt.cmds.compose_command') as compose:
                 cmds.update(args, self.parser)
                 assert subprocess.check_output.called
-                assert not fig.called
+                assert not compose.called
 
     def test_update_no_dir(self):
         args = self.parser.parse_args(['update'])

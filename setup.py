@@ -33,8 +33,8 @@ class Custom(install):
     def run(self):
         """
         Override the run command, so that post setup we can run our
-        own commands, to keep the fig yml up to date with any changes
-        from the library.
+        own commands, to keep the docker-compose yml up to date with any
+        changes from the library.
         """
         install.run(self)
 
@@ -76,7 +76,7 @@ setup(
     package_data=get_package_data('mkt'),
     install_requires=[
         'argcomplete',
-        'fig',
+        'docker-compose',
         'netifaces'
     ],
     zip_safe=False
