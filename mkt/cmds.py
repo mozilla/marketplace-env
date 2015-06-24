@@ -18,13 +18,13 @@ from pprint import pprint
 import netifaces
 import requests
 
-from fig.cli import main
+from compose.cli import main
 from version import __version__
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 join = functools.partial(os.path.join, ROOT)
 CONFIG_PATH = os.path.expanduser('~/.wharfie')
-FIG_PATH = os.getenv('FIG_FILE', os.path.expanduser('~/.mkt.fig.yml'))
+COMPOSE_PATH = os.getenv('COMPOSE_FILE', os.path.expanduser('~/.mkt.fig.yml'))
 
 BRANCHES = [
     'fireplace',
@@ -36,7 +36,7 @@ BRANCHES = [
     'signing-service'
 ]
 
-FIG_ALIASES = {
+COMPOSE_ALIASES = {
     'signing-service': 'signing'
 }
 
@@ -72,6 +72,7 @@ SERVICE_CHECKS = {
 }
 
 # Command functions:
+
 
 def check_git_config(args, parser):
     for branch in BRANCHES:
@@ -157,10 +158,11 @@ def locations():
         'tree': get_config_value('paths', 'root'),
         # Where the images live, will be local or in the installed path.
         'image': join('data', 'images'),
-        # Where fig config lives, will be local or in the installed file path.
-        'fig.dist': join('data', 'fig.yml.dist'),
-        # FIG_FILE is the file that fig uses.
-        'fig': FIG_PATH
+        # Where docker-compose config lives, will be local or in the installed
+        # file path.
+        'docker-compose.dist': join('data', 'docker-compose.yml.dist'),
+        # COMPOSE_FILE is the file that docker-compose uses.
+        'docker-compose': COMPOSE_PATH,
     }
 
 
@@ -207,11 +209,11 @@ def update_config(args, parser):
 
         context['build-{0}'.format(name)] = value
 
-    src_file = context['fig.dist']
+    src_file = context['docker-compose.dist']
     with open(src_file, 'r') as src:
         src_data = src.read()
 
-    dest_file = context['fig']
+    dest_file = context['docker-compose']
     new_data = src_data.format(**context)
 
     if os.path.exists(dest_file):
@@ -223,13 +225,13 @@ def update_config(args, parser):
 
     with open(dest_file, 'w') as dest:
         dest.write(new_data)
-        print 'Written fig file to {0}'.format(FIG_PATH)
+        print 'Written docker-compose file to {0}'.format(COMPOSE_PATH)
 
 
 def up(args, parser, argv):
     update_config(args, parser)
-    cmd = ['up', '-d', '--no-recreate'] + argv
-    fig_command(*cmd)
+    cmd = ['up'] + argv
+    compose_command(*cmd)
 
 up.argv = True
 
@@ -237,7 +239,7 @@ up.argv = True
 def bash(args, parser):
     project = get_project(args.project)
     cmd = ('docker exec -t -i {0} /bin/bash'
-           .format(get_fig_container(project).id))
+           .format(get_compose_container(project).id))
     os.system(cmd)
     return
 
@@ -252,7 +254,10 @@ def get_version(method):
             '^Boot2Docker-cli version: v(\d.\d)',
             ['boot2docker', 'version']
         ],
-        'fig': ['^fig (\d.\d)', ['fig', '--version']]
+        'docker-compose': [
+            '^docker-compose (\d.\d)',
+            ['docker-compose', '--version']
+        ],
     }
     regex, command = methods[method]
     try:
@@ -274,15 +279,15 @@ def get_version(method):
 
 def check(args, parser):
     context = locations()
-    default = os.getenv('FIG_FILE')
+    default = os.getenv('COMPOSE_FILE')
 
     diffs = []
-    if context['fig'] != default:
-        diffs.append('FIG_FILE={0}'.format(FIG_PATH))
+    if context['docker-compose'] != default:
+        diffs.append('COMPOSE_FILE={0}'.format(COMPOSE_PATH))
 
-    default = os.getenv('FIG_PROJECT_NAME')
-    if 'mkt' != os.getenv('FIG_PROJECT_NAME'):
-        diffs.append('FIG_PROJECT_NAME=mkt')
+    default = os.getenv('COMPOSE_PROJECT_NAME')
+    if 'mkt' != os.getenv('COMPOSE_PROJECT_NAME'):
+        diffs.append('COMPOSE_PROJECT_NAME=mkt')
 
     if diffs:
         print 'Set the following environment variables: '
@@ -328,8 +333,8 @@ def check(args, parser):
                        'is recommended. Run: docker version')
         if get_version('boot2docker')[0] < Decimal('1.3'):
             print 'Update boot2docker, version 1.3 or higher recommended.'
-        if get_version('fig')[0] < Decimal('1.0'):
-            print 'Update fig, version 1.0 or higher recommended.'
+        if get_version('docker-compose')[0] < Decimal('1.3'):
+            print 'Update docker-compose, version 1.3 or higher recommended.'
 
     if args.requirements:
         for branch in BRANCHES:
@@ -366,8 +371,8 @@ def update(args, parser):
     if migration:
         for migration in MIGRATIONS:
             print 'Running migration for: {0}'.format(migration)
-            fig_command('run', '--rm', migration,
-                        'schematic', 'migrations')
+            compose_command('run', '--rm', migration, 'schematic',
+                            'migrations')
 
 
 def bind(args, parser):
@@ -440,8 +445,8 @@ def bind(args, parser):
 def get_container_requirements(branch, files):
     project = get_project(branch)
     files_str = ' '.join([f.container for f in files])
-    cmd = ('docker exec -t -i {0} /bin/bash -c "cat {1} | sha1sum"'
-            .format(get_fig_container(project).id, files_str))
+    cmd = ('docker exec -t -i {0} /bin/bash -c "cat {1} | sha1sum"'.format(
+        get_compose_container(project).id, files_str))
     try:
         container = subprocess.check_output(cmd, shell=True)
     except subprocess.CalledProcessError:
@@ -481,10 +486,10 @@ def get_project(project):
     return project
 
 
-def get_fig_container(project):
+def get_compose_container(project):
     cmd = main.Command()
-    proj = cmd.get_project(FIG_PATH)
-    project = FIG_ALIASES.get(project, project)
+    proj = cmd.get_project(COMPOSE_PATH)
+    project = COMPOSE_ALIASES.get(project, project)
     containers = proj.containers(service_names=[project])
     if not containers:
         raise ValueError('No containers found for: {0}. '
@@ -492,7 +497,7 @@ def get_fig_container(project):
     return containers[0]
 
 
-def fig_command(*args):
+def compose_command(*args):
     cmd = main.TopLevelCommand()
     try:
         cmd.dispatch(args, None)
@@ -641,7 +646,7 @@ def create_parser():
     )
 
     parser_root = subparsers.add_parser(
-        'root', help='Create or update the root paths in the fig.yml.'
+        'root', help='Create or update the root paths in the docker-compose.yml.'
     )
     parser_root.add_argument(
         'directory', help='Path to the marketplace repositories.',
@@ -687,14 +692,16 @@ def create_parser():
         action='store_true'
     )
     parser_check.add_argument(
-        '--versions', help='Checks versions of docker, boot2docker and fig',
+        '--versions', help='Checks versions of docker, boot2docker and '
+                           'docker-compose',
         action='store_true'
     )
     parser_check.set_defaults(func=check)
 
     parser_up = subparsers.add_parser(
-        'up', help='Recreates fig.yml and starts the '
-                   'containers in the background, a wrapper around `fig up`'
+        'up', help='Recreates docker-compose.yml and starts the '
+                   'containers in the background, a wrapper around '
+                   '`docker-compose up`'
     )
     parser_up.set_defaults(func=up)
 
@@ -757,6 +764,6 @@ def create_parser():
     parser_bind.set_defaults(func=bind)
 
     parser.add_argument('--version', action='version', version=__version__)
-    # Setup the logging for fig.
+    # Setup the logging for compose.
     main.setup_logging()
     return parser
