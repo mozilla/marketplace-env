@@ -63,3 +63,5 @@ fig.yml
 # Ignore vagrant files from testing.
 .vagrant
 Vagrantfile
+
+docker/source-links/*
