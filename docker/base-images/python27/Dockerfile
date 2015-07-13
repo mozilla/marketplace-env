@@ -10,5 +10,5 @@ ENV LD_LIBRARY_PATH /opt/rh/python27/root/usr/lib64
 ENV LANG en_US.UTF-8
 
 # Peep won't work with pip 7 yet.
-RUN easy_install pip<7
+RUN easy_install pip==6.1.1
 RUN pip install ipython ipdb
