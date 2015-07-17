@@ -18,6 +18,7 @@ def main():
     for name in [
         'fireplace',
         'solitude',
+        'solitude-auth',
         'spartacus',
         'webpay',
         'zamboni',

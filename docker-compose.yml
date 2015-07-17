@@ -60,14 +60,28 @@ solitude:
     - PYTHONUNBUFFERED=1
     - PYTHONDONTWRITEBYTECODE=1
     - TERM=xterm-256color
-    - ZIPPY_BASE_URL=http://zippy:2605/zippy
   hostname: solitude
   links:
     - mysql:mysql
-    - zippy:zippy
+    - auth:solitude-auth
   volumes:
     - ./docker/source-links/solitude/:/srv/solitude
   working_dir: /srv/solitude
+
+auth:
+  image: mozillapayments/solitude-auth
+  command: supervisord -n -c /srv/auth/conf/supervisor.conf
+  environment:
+    - PYTHONUNBUFFERED=1
+    - PYTHONDONTWRITEBYTECODE=1
+    - TERM=xterm-256color
+    - ZIPPY_BASE_URL=http://zippy:2605/
+  hostname: auth
+  working_dir: /srv/auth
+  links:
+    - zippy:zippy
+  volumes:
+    - ./docker/source-links/solitude-auth/:/srv/auth
 
 spartacus:
   image: mozillamarketplace/spartacus
