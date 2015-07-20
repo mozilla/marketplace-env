@@ -5,6 +5,8 @@ ADD my.cnf /etc/my.cnf
 ADD setup.sh /setup.sh
 ADD run.sh /run.sh
 
+VOLUME /var/lib/mysql
+
 EXPOSE 3306
 
 CMD ["/bin/bash", "/run.sh"]
