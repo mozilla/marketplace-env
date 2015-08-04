@@ -5,12 +5,12 @@ RUN yum install -y java-1.7.0-openjdk tar which
 
 RUN mkdir -p /srv/elasticsearch
 WORKDIR /srv/elasticsearch
-RUN curl -O  https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.3.9.tar.gz
-RUN tar -xvzf elasticsearch-1.3.9.tar.gz
+RUN curl -O  https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.6.2.tar.gz
+RUN tar -xvzf elasticsearch-1.6.2.tar.gz
 
-WORKDIR /srv/elasticsearch/elasticsearch-1.3.9
+WORKDIR /srv/elasticsearch/elasticsearch-1.6.2
 
-RUN ./bin/plugin -install elasticsearch/elasticsearch-analysis-icu/2.3.0
+RUN ./bin/plugin -install elasticsearch/elasticsearch-analysis-icu/2.6.0
 
 RUN curl -o /srv/elasticsearch/marketplace.yml https://raw.githubusercontent.com/mozilla/zamboni/master/scripts/elasticsearch/elasticsearch.yml
 
