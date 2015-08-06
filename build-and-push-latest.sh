@@ -13,7 +13,7 @@ images=(mysql-service mysql-data nginx elasticsearch redis memcached)
 for i in "${images[@]}"
 do
     echo 'Building and pushing' $i
-    docker build -t mozillamarketplace/$i:latest mkt/data/images/$i
+    docker build -t mozillamarketplace/$i:latest docker/images/$i
     docker push mozillamarketplace/$i:latest
     echo '... done.'
 done
