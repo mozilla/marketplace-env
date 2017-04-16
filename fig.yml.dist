@@ -1,0 +1,107 @@
+elasticsearch:
+  build: {image}/elasticsearch
+  ports:
+    - "9200:9200"
+    - "9300:9300"
+
+fireplace:
+  build: {tree}/fireplace
+  command: /bin/bash /srv/fireplace/src/bin/docker_run.sh
+  environment:
+    - BOWER_PATH=/srv/fireplace/bower_components/
+    - GULP_CONFIG_PATH=/srv/fireplace/src/config
+  volumes:
+    - {tree}/fireplace/:/srv/fireplace/src
+  working_dir: /srv/fireplace/src
+
+nginx:
+  build: {image}/nginx
+  command: nginx -c /etc/nginx/nginx.conf -g "daemon off;"
+  links:
+    - webpay:webpay
+    - spartacus:spartacus
+    - solitude:solitude
+    - zamboni:zamboni
+    - zippy:zippy
+  ports:
+    - '80:80'
+  volumes:
+    - {tree}/spartacus/public/:/srv/spartacus
+    - {tree}/fireplace/src/:/srv/fireplace
+    - {tree}/zamboni/:/srv/zamboni
+
+memcached:
+  build: {image}/memcached
+  command: memcached -u nobody
+
+mysqldata:
+  build: {image}/mysql-data
+
+mysql:
+  build: {image}/mysql-service
+  volumes_from:
+    - mysqldata
+
+redis:
+  build: {image}/redis
+
+solitude:
+  build: {tree}/solitude
+  command: /bin/bash /srv/solitude/bin/docker_run.sh
+  environment:
+    - PYTHONUNBUFFERED=1
+    - PYTHONDONTWRITEBYTECODE=1
+    - ZIPPY_BASE_URL=http://zippy:2605/zippy
+  hostname: solitude
+  links:
+    - mysql:mysql
+    - zippy:zippy
+  volumes:
+    - {tree}/solitude/:/srv/solitude
+  working_dir: /srv/solitude
+
+spartacus:
+  build: {tree}/spartacus
+  command: "grunt docker"
+  volumes:
+    - {tree}/spartacus/:/srv/spartacus/src
+  working_dir: /srv/spartacus/src
+
+webpay:
+  build: {tree}/webpay
+  command: /bin/bash /srv/webpay/bin/docker_run.sh
+  environment:
+    - PYTHONUNBUFFERED=1
+    - PYTHONDONTWRITEBYTECODE=1
+    - ZIPPY_BASE_URL=http://mp.dev/zippy
+    - MKT_HOSTNAME=mp.dev
+  links:
+    - zippy:zippy
+    - solitude:solitude
+  volumes:
+    - {tree}/webpay/:/srv/webpay
+  working_dir: /srv/webpay
+
+zamboni:
+  build: {tree}/zamboni
+  command: /bin/bash /srv/zamboni/bin/docker_run.sh
+  environment:
+    - PYTHONUNBUFFERED=1
+    - PYTHONDONTWRITEBYTECODE=1
+  links:
+    - mysql:mysql
+    - memcached:memcached
+    - elasticsearch:elasticsearch
+    - solitude:solitude
+  volumes:
+    - {tree}/zamboni/:/srv/zamboni
+  working_dir: /srv/zamboni
+
+zippy:
+  build: {tree}/zippy
+  command: "grunt start --port 2605 --noauth"
+  links:
+    - redis:redis
+  volumes:
+    - {tree}/zippy/:/srv/zippy/src
+  working_dir: /srv/zippy/src
